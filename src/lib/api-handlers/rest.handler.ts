@@ -45,7 +45,7 @@ export function CreateApiRoute<T = any, P = Record<string, string>>(
       const params = context?.params ? await context.params : undefined;
 
       if (config.requiresAuth.status) {
-        session = (await getApiSession())?.user;
+        session = (await GetApiSession())?.user;
 
         if (!session?.id) {
           reqLogger.warn("Unauthorized: No session found");
