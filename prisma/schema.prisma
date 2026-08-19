@@ -11,3 +11,176 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model User {
+  id       String  @id @default(cuid())
+  name     String?
+  userName String  @unique
+  password String
+
+  sessions        Session[]
+  logs            Log[]
+  roleUsers       RoleUser[]
+  userPersmission UserPersmission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  ipAddress    String?
+  userAgent    String?
+  expiresAt    DateTime
+  sessionToken String   @unique
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("sessions")
+}
+
+model Role {
+  id        String @id @default(cuid())
+  name      String
+  guardName String
+
+  roleUsers       RoleUser[]
+  permissionRoles PermissionRole[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("roles")
+}
+
+model Permission {
+  id        String @id @default(cuid())
+  name      String
+  guardName String
+
+  permissionRoles PermissionRole[]
+  userPersmission UserPersmission[]
+
+  moduleId String
+  modules  Module @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("permissions")
+}
+
+model Module {
+  id       String  @id @default(cuid())
+  name     String
+  slug     String
+  isActive Boolean @default(false)
+
+  permissions Permission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("modules")
+}
+
+model PermissionRole {
+  id String @id @default(cuid())
+
+  roleId String
+  roles  Role   @relation(fields: [roleId], references: [id])
+
+  permissionId String
+  permissions  Permission @relation(fields: [permissionId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("permission_roles")
+}
+
+model RoleUser {
+  id String @id @default(cuid())
+
+  userId String
+  users  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  roleId String
+  roles  Role   @relation(fields: [roleId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, roleId])
+  @@map("role_users")
+}
+
+model UserPersmission {
+  id String @id @default(cuid())
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  permissionId String?
+  permission   Permission? @relation(fields: [permissionId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("user_permission")
+}
+
+model Log {
+  id       String      @id @default(cuid())
+  type     LogType
+  severity LogSeverity @default(INFO)
+
+  message String @db.Text
+  details Json?
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  ipAddress String?
+
+  targetId   String?
+  targetName String?
+
+  createdAt DateTime @default(now())
+
+  @@index([type])
+  @@index([severity])
+  @@index([userId])
+  @@index([ipAddress])
+  @@index([targetId])
+  @@index([targetName])
+  @@map("logs")
+}
+
+enum LogType {
+  AUTH_LOGIN_SUCCESS
+  AUTH_LOGIN_FAILED
+  AUTH_LOGOUT
+  AUTH_ROLE_CHANGED
+
+  NETWORK_DISCONNECT
+  PROFILE_UPDATED
+  PASSWORD_UPDATED
+  CONNECTION_REQUESTED
+  CONNECTION_ACCEPTED
+  CONNECTION_SUCCESS
+  CONNECTION_WARNING
+}
+
+enum LogSeverity {
+  INFO
+  WARNING
+  ERROR
+  FATAL
+}
