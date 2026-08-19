@@ -6,10 +6,17 @@ import { NextResponse } from "next/server";
 
 export async function DeleteCategory(
   session: ISession,
-  params: DynamicApiRouteInput,
+  params: DynamicApiRouteInput | undefined,
   logger: Logger,
 ) {
-  const { id } = params;
+  const id = params?.id;
+  if (!id) {
+    logger?.warn("Delete category requested without a category ID");
+    return NextResponse.json(
+      { error: "Category ID required" },
+      { status: 400 },
+    );
+  }
   const { id: userId, userName } = session;
 
   try {
