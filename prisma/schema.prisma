@@ -17,11 +17,14 @@ model User {
   name     String?
   userName String  @unique
   password String
+  isActive Boolean @default(true)
 
-  sessions        Session[]
-  logs            Log[]
-  roleUsers       RoleUser[]
-  userPersmission UserPersmission[]
+  sessions     Session[]
+  logs         Log[]
+  transactions Transaction[]
+
+  roles       Role[]
+  permissions Permission[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -50,8 +53,8 @@ model Role {
   name      String
   guardName String
 
-  roleUsers       RoleUser[]
-  permissionRoles PermissionRole[]
+  users       User[]
+  permissions Permission[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -64,8 +67,8 @@ model Permission {
   name      String
   guardName String
 
-  permissionRoles PermissionRole[]
-  userPersmission UserPersmission[]
+  users User[]
+  roles Role[]
 
   moduleId String
   modules  Module @relation(fields: [moduleId], references: [id], onDelete: Cascade)
@@ -90,55 +93,94 @@ model Module {
   @@map("modules")
 }
 
-model PermissionRole {
-  id String @id @default(cuid())
-
-  roleId String
-  roles  Role   @relation(fields: [roleId], references: [id])
-
-  permissionId String
-  permissions  Permission @relation(fields: [permissionId], references: [id])
+model Category {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  description String?
+  products    Product[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("permission_roles")
+  @@map("categories")
 }
 
-model RoleUser {
-  id String @id @default(cuid())
+model Product {
+  id          String  @id @default(cuid())
+  name        String
+  sku         String? @unique
+  description String
 
-  userId String
-  users  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
-  roleId String
-  roles  Role   @relation(fields: [roleId], references: [id])
+  stocks Stock[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([userId, roleId])
-  @@map("role_users")
+  @@map("products")
 }
 
-model UserPersmission {
-  id String @id @default(cuid())
+enum ProductCategory {
+  COMPUTER_ACCESSORIES
+  DESKTOP_AND_PRINTER
+  NETWORK_AND_SECURITY_CAMERAS
+  LAPTOP_COMPUTER
+  HARDDRIVE_AND_RAM
+  TONERS
+}
+
+model Stock {
+  id           String  @id @default(cuid())
+  serialNumber String? @unique
+  batchNumber  String?
+  quantity     Int
+
+  costPrice    Float
+  sellingPrice Float
+  withVat      Boolean @default(false)
+
+  productId String
+  products  Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  history   Transaction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("stocks")
+}
+
+model Transaction {
+  id            String          @id @default(cuid())
+  invoiceNumber String?         @unique
+  type          TransactionType
+  quantity      Int
+  price         Float
+
+  stockId String
+  stocks  Stock  @relation(fields: [stockId], references: [id], onDelete: Cascade)
 
   userId String?
-  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
-
-  permissionId String?
-  permission   Permission? @relation(fields: [permissionId], references: [id], onDelete: SetNull)
+  users  User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("user_permission")
+  @@map("transactions")
+}
+
+enum TransactionType {
+  SOLD
+  PURCHASED
+  RETURNED
+  DEFECTIVE
+  ADJUSTMENT_LOSS
 }
 
 model Log {
   id       String      @id @default(cuid())
-  type     LogType
+  type     String
   severity LogSeverity @default(INFO)
 
   message String @db.Text
@@ -161,21 +203,6 @@ model Log {
   @@index([targetId])
   @@index([targetName])
   @@map("logs")
-}
-
-enum LogType {
-  AUTH_LOGIN_SUCCESS
-  AUTH_LOGIN_FAILED
-  AUTH_LOGOUT
-  AUTH_ROLE_CHANGED
-
-  NETWORK_DISCONNECT
-  PROFILE_UPDATED
-  PASSWORD_UPDATED
-  CONNECTION_REQUESTED
-  CONNECTION_ACCEPTED
-  CONNECTION_SUCCESS
-  CONNECTION_WARNING
 }
 
 enum LogSeverity {

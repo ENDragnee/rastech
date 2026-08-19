@@ -20,19 +20,8 @@ export async function UserNameSignIn(
   const user = await prisma.user.findUnique({
     where: { userName: credentials.userName },
     include: {
-      roleUsers: {
-        include: {
-          roles: {
-            include: {
-              permissionRoles: {
-                include: {
-                  permissions: true,
-                },
-              },
-            },
-          },
-        },
-      },
+      roles: true,
+      permissions: true,
     },
   });
 
@@ -58,10 +47,8 @@ export async function UserNameSignIn(
     throw new Error("Invalid username or password!");
   }
 
-  const userRoles = user.roleUsers.map((ru) => ru.roles.guardName);
-  const rolePermissions = user.roleUsers.flatMap((ru) =>
-    ru.roles.permissionRoles.map((pr) => pr.permissions.guardName),
-  );
+  const userRoles = user.roles.map((ru) => ru.guardName);
+  const rolePermissions = user.permissions.map((pr) => pr.guardName);
   reqLogger.info({ userId: user.id }, "User signed in successfully");
 
   await prisma.log.create({
