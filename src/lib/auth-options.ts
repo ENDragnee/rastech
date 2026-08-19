@@ -31,7 +31,7 @@ export const authOptions: NextAuthOptions = {
   },
 
   callbacks: {
-    async jwt({ token, user, trigger, session: updateSession }) {
+    async jwt({ token, user }) {
       if (user) {
         const { userAgent, ip } = await getUserAgent();
         const expiresAt = new Date(Date.now() + SESSION_MAX_AGE * 1000);
@@ -68,10 +68,6 @@ export const authOptions: NextAuthOptions = {
 
       if (!dbSession || dbSession.expiresAt < new Date()) {
         token.invalid = true;
-      }
-
-      if (trigger === "update" && updateSession?.subscriptionTier) {
-        token.subscriptionTier = updateSession.subscriptionTier;
       }
 
       return token;
