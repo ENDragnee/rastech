@@ -16,8 +16,8 @@ export const FetchStockSchema = z.object({
   page: z.coerce.number().int().min(1).positive().default(1),
   limit: z.coerce.number().int().min(5).max(50).positive().default(10),
   sort: z
-    .enum(["created_at", "costPrice", "sellingPrice"])
-    .default("created_at"),
+    .enum(["createdAt", "costPrice", "sellingPrice"])
+    .default("createdAt"),
   order: z.enum(["asc", "desc"]).default("desc"),
   search: z.string().min(2).optional(),
   // aggregate: z.boolean().default(false),
