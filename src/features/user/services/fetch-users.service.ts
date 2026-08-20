@@ -13,7 +13,7 @@ export async function FetchUsers(req: FetchUserInput) {
   };
 
   try {
-    const [users, count] = await Promise.all([
+    const [users, count] = await prisma.$transaction([
       prisma.user.findMany({
         where: whereClause,
         skip: offset,

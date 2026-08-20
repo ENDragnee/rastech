@@ -1,35 +1,39 @@
 import { prisma } from "@/lib/prisma";
-import { FetchProductsInput } from "../schemas/product.schema";
+import { FetchStockInput } from "../schemas/stock.schema";
 import { Prisma } from "@/generated/prisma/client";
 
-export async function FetchProducts(req: FetchProductsInput) {
+export async function FetchStocks(req: FetchStockInput) {
   const { page, limit, order, sort, search } = req;
   const offset = (page - 1) * limit;
-  const whereClause: Prisma.ProductWhereInput = {
+  const whereClause: Prisma.StockWhereInput = {
     ...(search && {
       OR: [
-        { name: { contains: search, mode: "insensitive" } },
-        { sku: { contains: search, mode: "insensitive" } },
+        {
+          products: {
+            name: { contains: search, mode: "insensitive" },
+            sku: { contains: search, mode: "insensitive" },
+          },
+        },
       ],
     }),
   };
 
   try {
-    const [products, count] = await prisma.$transaction([
-      prisma.product.findMany({
+    const [stock, count] = await prisma.$transaction([
+      prisma.stock.findMany({
         where: whereClause,
         skip: offset,
         take: limit,
         orderBy: { [sort]: order },
       }),
-      prisma.product.count({
+      prisma.stock.count({
         where: whereClause,
       }),
     ]);
     const totalPages = Math.ceil(count / limit);
 
     return {
-      data: products,
+      data: stock,
       meta: {
         total: count,
         page,
