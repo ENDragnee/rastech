@@ -7,8 +7,8 @@ import { NextResponse } from "next/server";
 
 export async function UpdateProduct(
   body: UpdateProductInput,
-  params: DynamicApiRouteInput | undefined,
   session: ISession,
+  params: DynamicApiRouteInput | undefined,
   logger: Logger,
 ) {
   const { id: userId, userName } = session;
@@ -21,26 +21,27 @@ export async function UpdateProduct(
   const { name, description, categoryId, sku } = body;
 
   try {
-    const updatedProduct = await prisma.product.update({
-      where: { id },
-      data: {
-        ...(name && { name }),
-        ...(description && { description }),
-        ...(categoryId && { categoryId }),
-        ...(sku && { sku }),
-      },
+    const updatedProduct = await prisma.$transaction(async (tx) => {
+      await prisma.log.create({
+        data: {
+          type: "UPDATE_PRODUCT",
+          severity: "INFO",
+          message: `User ${userName} updated the product ${updatedProduct.id}`,
+          userId: userId,
+        },
+      });
+      return tx.product.update({
+        where: { id },
+        data: {
+          ...(name && { name }),
+          ...(description && { description }),
+          ...(categoryId && { categoryId }),
+          ...(sku && { sku }),
+        },
+      });
     });
 
     logger.info({ id }, "Updated product sucessfully");
-
-    await prisma.log.create({
-      data: {
-        type: "UPDATE_PRODUCT",
-        severity: "INFO",
-        message: `User ${userName} updated the product ${updatedProduct.id}`,
-        userId: userId,
-      },
-    });
 
     return updatedProduct;
   } catch (err: any) {

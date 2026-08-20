@@ -15,25 +15,34 @@ export async function CreateUser(
 
   try {
     const hashedPassword = await HashPassword(passowrd);
-    const createUser = await prisma.user.create({
-      data: {
-        ...(name ? { name } : { name: "" }),
-        userName,
-        password: hashedPassword,
-        isActive,
-      },
+
+    if (!hashedPassword) {
+      logger?.error({ userId }, "Failed to hash the password");
+      return NextResponse.json(
+        { error: "Failed to hash the password" },
+        { status: 500 },
+      );
+    }
+    const createUser = await prisma.$transaction(async (tx) => {
+      await tx.log.create({
+        data: {
+          type: "USER_CREATE",
+          severity: "INFO",
+          message: `User ${session.userName} has created a user: ${createUser.userName}`,
+          userId: userId,
+        },
+      });
+      return tx.user.create({
+        data: {
+          ...(name ? { name } : { name: "" }),
+          userName,
+          password: hashedPassword,
+          isActive,
+        },
+      });
     });
 
     logger?.info({ userId: createUser.id }, "User created successfully");
-
-    await prisma.log.create({
-      data: {
-        type: "USER_CREATE",
-        severity: "INFO",
-        message: `User ${session.userName} has created a user: ${createUser.userName}`,
-        userId: userId,
-      },
-    });
 
     return createUser;
   } catch (err: any) {

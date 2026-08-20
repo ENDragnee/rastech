@@ -101,7 +101,12 @@ export function CreateApiRoute<T = any, P = Record<string, string>>(
         parsedBody = validation.data;
       }
 
-      const result = await config.handler(parsedBody, session, params);
+      const result = await config.handler(
+        parsedBody,
+        session,
+        params,
+        reqLogger,
+      );
       const durationMs = Math.round(performance.now() - startTime);
 
       if (result instanceof NextResponse) {

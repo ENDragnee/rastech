@@ -5,8 +5,8 @@ import { Logger } from "pino";
 import { NextResponse } from "next/server";
 
 export async function DeleteProduct(
-  params: DynamicApiRouteInput | undefined,
   session: ISession,
+  params: DynamicApiRouteInput | undefined,
   logger: Logger,
 ) {
   const id = params?.id;
@@ -17,18 +17,19 @@ export async function DeleteProduct(
   const { id: userId, userName } = session;
 
   try {
-    await prisma.product.delete({ where: { id } });
+    await prisma.$transaction(async (tx) => {
+      await tx.product.delete({ where: { id } });
+      await tx.log.create({
+        data: {
+          type: "DELETE_PRODUCT",
+          severity: "INFO",
+          message: `User ${userName} deleted product ${id}`,
+          userId,
+        },
+      });
+    });
 
     logger.info({ userId }, "Product deleted successfully");
-
-    await prisma.log.create({
-      data: {
-        type: "DELETE_PRODUCT",
-        severity: "INFO",
-        message: `User ${userName} deleted product ${id}`,
-        userId,
-      },
-    });
   } catch (err) {
     throw err;
   }

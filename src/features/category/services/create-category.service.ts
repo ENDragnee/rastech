@@ -13,11 +13,21 @@ export async function CreateCategory(
   const { id: userId, userName } = session;
 
   try {
-    const category = await prisma.category.create({
-      data: {
-        name,
-        ...(description && { description }),
-      },
+    const category = await prisma.$transaction(async (tx) => {
+      await prisma.log.create({
+        data: {
+          type: "CATEGORY_CREATE",
+          severity: "INFO",
+          message: `User ${userName} has created category ${category.name}`,
+          userId,
+        },
+      });
+      return await tx.category.create({
+        data: {
+          name,
+          ...(description && { description }),
+        },
+      });
     });
 
     logger.info({ userName }, "Category created successfully");

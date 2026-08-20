@@ -13,25 +13,26 @@ export async function CreateProduct(
   const { name, description, categoryId, sku } = body;
 
   try {
-    const product = await prisma.product.create({
-      data: {
-        name,
-        ...(description && { description }),
-        categoryId,
-        sku,
-      },
-    });
+    const product = await prisma.$transaction(async (tx) => {
+      await tx.log.create({
+        data: {
+          type: "CREATE_PRODUCT",
+          severity: "INFO",
+          message: `User ${userName} created product ${product.id}`,
+          userId,
+        },
+      });
 
+      return await tx.product.create({
+        data: {
+          name,
+          ...(description && { description }),
+          categoryId,
+          sku,
+        },
+      });
+    });
     logger.info({ productId: product.id }, "Product created successfully");
-
-    await prisma.log.create({
-      data: {
-        type: "CREATE_PRODUCT",
-        severity: "INFO",
-        message: `User ${userName} created product ${product.id}`,
-        userId,
-      },
-    });
 
     return product;
   } catch (err: any) {

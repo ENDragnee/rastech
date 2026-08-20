@@ -20,29 +20,45 @@ export async function UpdateUser(
 
   const { name, userName, passowrd } = body;
   try {
-    let hashedPassword;
+    let hashedPassword: string;
     if (passowrd) {
       hashedPassword = await HashPassword(passowrd);
+      if (!hashedPassword) {
+        logger.error({ userId }, "Failed to hash the password");
+        return NextResponse.json(
+          { error: "Failed to hash the password" },
+          { status: 500 },
+        );
+      }
     }
-    const user = await prisma.user.update({
-      where: { id: userId },
-      data: {
-        ...(name && { name }),
-        ...(userName && { userName }),
-        ...(passowrd && { password: hashedPassword }),
-      },
+    const user = await prisma.$transaction(async (tx) => {
+      await tx.log.create({
+        data: {
+          type: "USER_UPDATED",
+          severity: "INFO",
+          message: `User ${session.userName} has updated user: ${user.userName}.`,
+          userId: session.id,
+        },
+      });
+      return await tx.user.update({
+        where: { id: userId },
+        data: {
+          ...(name && { name }),
+          ...(userName && { userName }),
+          ...(passowrd && { password: hashedPassword }),
+        },
+      });
     });
+    // const user = await prisma.user.update({
+    //   where: { id: userId },
+    //   data: {
+    //     ...(name && { name }),
+    //     ...(userName && { userName }),
+    //     ...(passowrd && { password: hashedPassword }),
+    //   },
+    // });
 
     logger.info({ userId }, "User has been deleted successfully");
-
-    await prisma.log.create({
-      data: {
-        type: "USER_UPDATED",
-        severity: "INFO",
-        message: `User ${session.userName} has updated user: ${user.userName}.`,
-        userId: session.id,
-      },
-    });
   } catch (err: any) {
     if (err.code === "P2002") {
       logger?.warn(

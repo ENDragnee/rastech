@@ -20,7 +20,7 @@ export const PATCH = CreateApiRoute({
     session: any,
     logger: any,
   ) => {
-    return await UpdateProduct(body, params, session, logger);
+    return await UpdateProduct(body, session, params, logger);
   },
 });
 
@@ -35,6 +35,6 @@ export const DELETE = CreateApiRoute({
     session: any,
     logger: any,
   ) => {
-    return await DeleteProduct(params, session, logger);
+    return await DeleteProduct(session, params, logger);
   },
 });

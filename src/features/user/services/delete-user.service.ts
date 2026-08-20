@@ -14,16 +14,7 @@ export async function DeleteUser(
     logger?.warn("Update connection requested without a user ID");
     return NextResponse.json({ error: "User ID required" }, { status: 400 });
   }
-  try {
-    const user = await prisma.user.update({
-      where: { id: userId },
-      data: {
-        isActive: false,
-      },
-    });
-
-    logger.info({ userId }, "User has been deleted successfully");
-
+  const user = await prisma.$transaction(async (tx) => {
     await prisma.log.create({
       data: {
         type: "USER_DELETED",
@@ -32,7 +23,13 @@ export async function DeleteUser(
         userId: session.id,
       },
     });
-  } catch (err) {
-    throw err;
-  }
+    return tx.user.update({
+      where: { id: userId },
+      data: {
+        isActive: false,
+      },
+    });
+  });
+
+  logger.info({ userId }, "User has been deleted successfully");
 }

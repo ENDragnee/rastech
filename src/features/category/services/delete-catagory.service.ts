@@ -20,18 +20,19 @@ export async function DeleteCategory(
   const { id: userId, userName } = session;
 
   try {
-    await prisma.category.delete({ where: { id } });
+    await prisma.$transaction(async (tx) => {
+      await tx.category.delete({ where: { id } });
+      await tx.log.create({
+        data: {
+          type: "CATEGORY_DELETED",
+          severity: "INFO",
+          message: `User ${userName} has deleted category ${id}`,
+          userId,
+        },
+      });
+    });
 
     logger.info({ id }, "Category deleted successfully");
-
-    await prisma.log.create({
-      data: {
-        type: "CATEGORY_DELETED",
-        severity: "INFO",
-        message: `User ${userName} has deleted category ${id}`,
-        userId,
-      },
-    });
   } catch (err: any) {
     if (err.code === "P2002") {
       logger?.warn(
