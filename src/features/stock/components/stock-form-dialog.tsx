@@ -16,7 +16,6 @@ import {
   DollarSign,
   CheckCircle2,
   XCircle,
-  Percent,
   Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -36,7 +35,6 @@ export function StockFormDialog({
 }: StockFormDialogProps) {
   const isEditing = !!stock;
 
-  // Form States
   const [stockType, setStockType] = useState<"SERIALIZED" | "BATCH">("SERIALIZED");
   const [productId, setProductId] = useState("");
   const [productSearch, setProductSearch] = useState("");
@@ -56,7 +54,6 @@ export function StockFormDialog({
 
   const productsList = productsData?.data || [];
 
-  // Populate on open
   useEffect(() => {
     if (isOpen) {
       if (stock) {
@@ -86,7 +83,6 @@ export function StockFormDialog({
 
   if (!isOpen) return null;
 
-  // Real-time Margin & Markup calculations
   const markupPercent =
     costPrice > 0 ? ((sellingPrice - costPrice) / costPrice) * 100 : 0;
   const marginPercent =
@@ -97,11 +93,6 @@ export function StockFormDialog({
 
     if (!isEditing && !productId) {
       toast.error("Please select a product for this stock intake.");
-      return;
-    }
-
-    if (stockType === "SERIALIZED" && !serialNumber.trim()) {
-      toast.error("Serial Number is required for serialized items.");
       return;
     }
 
@@ -118,8 +109,8 @@ export function StockFormDialog({
           sellingPrice,
           quantity: stockType === "SERIALIZED" ? 1 : quantity,
           withVat,
-          serialNumber: stockType === "SERIALIZED" ? serialNumber.trim() : null,
-          batchNumber: stockType === "BATCH" ? batchNumber.trim() : null,
+          serialNumber: serialNumber.trim() ? serialNumber.trim() : null, // Optional
+          batchNumber: batchNumber.trim() ? batchNumber.trim() : null, // Optional
         });
         toast.success("Stock details updated successfully");
       } else {
@@ -129,8 +120,8 @@ export function StockFormDialog({
           sellingPrice,
           quantity: stockType === "SERIALIZED" ? 1 : quantity,
           withVat,
-          serialNumber: stockType === "SERIALIZED" ? serialNumber.trim() : null,
-          batchNumber: stockType === "BATCH" ? batchNumber.trim() : null,
+          serialNumber: serialNumber.trim() ? serialNumber.trim() : null, // Optional
+          batchNumber: batchNumber.trim() ? batchNumber.trim() : null, // Optional
         });
         toast.success("Stock intake recorded successfully");
       }
@@ -164,7 +155,7 @@ export function StockFormDialog({
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 space-y-4 overflow-y-auto flex-1 text-xs">
-          {/* Stock Type Selector (Only on Create) */}
+          {/* Intake Format Switcher */}
           {!isEditing && (
             <div className="space-y-1.5">
               <label className="font-medium text-foreground">Inventory Intake Format</label>
@@ -182,10 +173,10 @@ export function StockFormDialog({
                 >
                   <div className="flex items-center gap-1.5 font-bold">
                     <Barcode className="w-4 h-4" />
-                    Serialized Unit
+                    Individual Unit
                   </div>
                   <div className="text-[10px] text-muted-foreground mt-0.5 font-normal">
-                    Unique Serial # (Laptops, Cameras, PCs). Qty = 1.
+                    Single device (Serial # optional). Qty = 1.
                   </div>
                 </button>
 
@@ -202,18 +193,18 @@ export function StockFormDialog({
                     Batch / Bulk Lot
                   </div>
                   <div className="text-[10px] text-muted-foreground mt-0.5 font-normal">
-                    Batch Code (RAM, Toners, Cables). Qty &ge; 1.
+                    Batch code (RAM, Toners, Accessories). Qty &ge; 1.
                   </div>
                 </button>
               </div>
             </div>
           )}
 
-          {/* 1. Product Selection */}
+          {/* Product Selection */}
           {!isEditing ? (
             <div className="space-y-1.5">
               <label className="font-medium text-foreground">
-                Target Hardware Product <span className="text-destructive">*</span>
+                Target Product <span className="text-destructive">*</span>
               </label>
               {!selectedProduct ? (
                 <div className="space-y-2">
@@ -243,7 +234,6 @@ export function StockFormDialog({
                           onClick={() => {
                             setSelectedProduct(p);
                             setProductId(p.id);
-                            // Autofill VAT setting from product
                             if (p.withVat !== undefined) setWithVat(p.withVat);
                           }}
                           className="w-full p-2 text-left hover:bg-muted/50 transition-colors flex justify-between items-center"
@@ -286,13 +276,16 @@ export function StockFormDialog({
             </div>
           )}
 
-          {/* 2. Identifier (Serial # or Batch #) */}
+          {/* Serial Number & Batch Number Inputs (Serial # is Optional) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {stockType === "SERIALIZED" ? (
               <div className="space-y-1.5 sm:col-span-2">
-                <label className="font-medium text-foreground flex items-center gap-1.5">
-                  <Barcode className="w-3.5 h-3.5 text-primary" />
-                  Hardware Serial Number <span className="text-destructive">*</span>
+                <label className="font-medium text-foreground flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Barcode className="w-3.5 h-3.5 text-primary" />
+                    Hardware Serial Number (Optional)
+                  </span>
+                  <span className="text-[10px] text-muted-foreground font-normal">Leave blank if non-serialized</span>
                 </label>
                 <Input
                   type="text"
@@ -300,7 +293,6 @@ export function StockFormDialog({
                   value={serialNumber}
                   onChange={(e) => setSerialNumber(e.target.value)}
                   className="h-9 text-xs font-mono uppercase bg-background"
-                  required
                 />
               </div>
             ) : (
@@ -333,7 +325,7 @@ export function StockFormDialog({
             )}
           </div>
 
-          {/* 3. Pricing Matrix */}
+          {/* Pricing Matrix */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <label className="font-medium text-foreground flex items-center gap-1">
@@ -370,7 +362,7 @@ export function StockFormDialog({
             </div>
           </div>
 
-          {/* Live Profit Margin & Markup Indicator */}
+          {/* Live Profit Margin Indicator */}
           <div className="p-3 rounded-xl bg-muted/40 border border-border grid grid-cols-2 gap-2 text-[11px]">
             <div>
               <span className="text-muted-foreground block">Cost Markup:</span>
@@ -386,7 +378,7 @@ export function StockFormDialog({
             </div>
           </div>
 
-          {/* 4. VAT Tax Classification */}
+          {/* VAT Status */}
           <div className="space-y-1.5">
             <label className="font-medium text-foreground">Tax Classification</label>
             <div className="grid grid-cols-2 gap-2">

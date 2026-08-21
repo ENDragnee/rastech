@@ -7,10 +7,14 @@ import { GenerateCode } from "@/lib/generate-code";
 export async function ProcessSaleCheckout(
   body: CreateSaleInput,
   session: ISession,
-  logger: Logger,
+  logger?: Logger,
 ) {
-  const { id: userId, userName } = session;
+  const { id: userId, userName, role } = session;
   const { items, paymentMethod, customerName, customerPhone } = body;
+
+  const userRoles = Array.isArray(role) ? role : [role || "STAFF"];
+  const isManagerOrAdmin =
+    userRoles.includes("ADMIN") || userRoles.includes("MANAGER");
 
   const baseInvoiceNumber = GenerateCode();
   const safeCustomerName = customerName?.trim() || null;
@@ -22,7 +26,7 @@ export async function ProcessSaleCheckout(
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
 
-      // 1. Fetch Stock and product details
+      // 1. Fetch exact Stock batch or serial unit
       const stock = await tx.stock.findUnique({
         where: { id: item.stockId },
         include: { products: true },
@@ -32,13 +36,21 @@ export async function ProcessSaleCheckout(
         throw new Error(`Stock record with ID "${item.stockId}" not found.`);
       }
 
-      if (stock.quantity < item.quantity) {
+      // 2. Hard Cost Floor Guardrail: Prevent selling below wholesale cost without manager approval
+      if (item.price < stock.costPrice && !isManagerOrAdmin) {
         throw new Error(
-          `Insufficient stock for "${stock.products.name}". Available: ${stock.quantity}, Requested: ${item.quantity}`,
+          `Price violation: Unit price ($${item.price.toFixed(2)}) cannot be lower than the wholesale cost ($${stock.costPrice.toFixed(2)}) for "${stock.products.name}". Requires Manager Approval.`,
         );
       }
 
-      // 2. Decrement stock atomically
+      // 3. Quantity validation for this specific batch/serial
+      if (stock.quantity < item.quantity) {
+        throw new Error(
+          `Insufficient stock in batch/unit for "${stock.products.name}". Available: ${stock.quantity}, Requested: ${item.quantity}`,
+        );
+      }
+
+      // 4. Decrement stock from this specific batch or serial record
       await tx.stock.update({
         where: { id: item.stockId },
         data: {
@@ -46,7 +58,7 @@ export async function ProcessSaleCheckout(
         },
       });
 
-      // 3. Compute warranty expiration
+      // 5. Compute hardware warranty expiration
       let warrantyEndsAt: Date | null = null;
       if (stock.products.warrantyDays && stock.products.warrantyDays > 0) {
         warrantyEndsAt = new Date(
@@ -57,14 +69,14 @@ export async function ProcessSaleCheckout(
       const invoiceNumber =
         items.length > 1 ? `${baseInvoiceNumber}-${i + 1}` : baseInvoiceNumber;
 
-      // 4. Create individual transaction record
+      // 6. Create transaction line item
       const transaction = await tx.transaction.create({
         data: {
           invoiceNumber,
           type: "SOLD",
           quantity: item.quantity,
           price: item.price,
-          paymentMethod,
+          paymentMethod: paymentMethod || "CASH",
           customerName: safeCustomerName,
           customerPhone: safeCustomerPhone,
           warrantyEndsAt,
@@ -81,7 +93,7 @@ export async function ProcessSaleCheckout(
       createdTransactions.push(transaction);
     }
 
-    // 5. Log audit event
+    // 7. Audit Log
     await tx.log.create({
       data: {
         type: "TRANSACTION_SOLD",
@@ -104,7 +116,7 @@ export async function ProcessSaleCheckout(
     };
   });
 
-  logger.info(
+  logger?.info(
     { invoice: result.invoiceNumber },
     "Sale checkout completed successfully",
   );

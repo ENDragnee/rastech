@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import type { SyntheticEvent } from "react";
+import { signIn, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,15 +17,15 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
 
     try {
       const res = await signIn("credentials", {
-        userName,
-        password,
+        userName: userName.trim(),
+        password: password.trim(),
         redirect: false,
       });
 
@@ -34,7 +35,23 @@ export function LoginForm() {
         setIsLoading(false);
       } else {
         toast.success("Welcome back!");
-        router.push("/");
+
+        // Retrieve session to resolve user's role for direct redirection
+        const session = await getSession();
+        const userRoles = Array.isArray(session?.user?.role)
+          ? session.user.role
+          : [session?.user?.role || "STAFF"];
+
+        let targetHref = "/cashier/dashboard";
+        if (userRoles.includes("ADMIN")) {
+          targetHref = "/admin/dashboard";
+        } else if (userRoles.includes("MANAGER")) {
+          targetHref = "/manager/dashboard";
+        } else if (userRoles.includes("CASHIER")) {
+          targetHref = "/cashier/dashboard";
+        }
+
+        router.push(targetHref);
         router.refresh();
       }
     } catch {
@@ -46,12 +63,13 @@ export function LoginForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <div className="flex items-center gap-2.5 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
+        <div className="flex items-center gap-2.5 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
           <AlertCircle className="h-4 w-4 shrink-0" />
           <p className="font-medium">{error}</p>
         </div>
       )}
 
+      {/* Username */}
       <div className="space-y-1.5">
         <label className="text-xs font-medium text-foreground" htmlFor="userName">
           Username
@@ -61,16 +79,18 @@ export function LoginForm() {
           <Input
             id="userName"
             type="text"
-            placeholder="e.g. jdoe"
+            placeholder="e.g. admin, manager, cashier"
             value={userName}
             onChange={(e) => setUserName(e.target.value)}
             required
             disabled={isLoading}
-            className="pl-9 h-10 text-sm bg-background border-border"
+            className="pl-9 h-10 text-xs bg-background border-border"
+            autoFocus
           />
         </div>
       </div>
 
+      {/* Password */}
       <div className="space-y-1.5">
         <label className="text-xs font-medium text-foreground" htmlFor="password">
           Password
@@ -85,7 +105,7 @@ export function LoginForm() {
             onChange={(e) => setPassword(e.target.value)}
             required
             disabled={isLoading}
-            className="pl-9 pr-9 h-10 text-sm bg-background border-border"
+            className="pl-9 pr-9 h-10 text-xs bg-background border-border"
           />
           <button
             type="button"
@@ -103,18 +123,19 @@ export function LoginForm() {
         </div>
       </div>
 
+      {/* Sign In Button */}
       <Button
         type="submit"
         disabled={isLoading}
-        className="w-full h-10 font-medium text-sm transition-all"
+        className="w-full h-10 font-semibold text-xs transition-all bg-primary text-primary-foreground shadow-sm"
       >
         {isLoading ? (
           <span className="flex items-center gap-2">
             <Loader2 className="h-4 w-4 animate-spin" />
-            Signing in...
+            Authenticating...
           </span>
         ) : (
-          "Sign In"
+          "Sign In to Account"
         )}
       </Button>
     </form>

@@ -18,6 +18,9 @@ import {
   Sparkles,
   ArrowRight,
   X,
+  AlertTriangle,
+  Barcode,
+  Boxes,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -28,7 +31,9 @@ interface CartItem {
   sku: string;
   serialNumber?: string | null;
   batchNumber?: string | null;
-  price: number;
+  price: number; // Negotiated selling price
+  costPrice: number; // Wholesale cost floor
+  defaultPrice: number; // Default retail selling price
   quantity: number;
   maxQuantity: number;
   withVat: boolean;
@@ -41,7 +46,7 @@ export default function PosPage() {
   const [isMobileCartOpen, setIsMobileOpen] = useState(false);
 
   // Modals
-  const [serialProduct, setSerialProduct] = useState<ProductItem | null>(null);
+  const [dialogProduct, setDialogProduct] = useState<ProductItem | null>(null);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [lastInvoice, setLastInvoice] = useState<any | null>(null);
 
@@ -49,75 +54,80 @@ export default function PosPage() {
   const { data: productsData, isLoading: isLoadingProducts } = useProducts(search, selectedCategory);
   const checkoutSale = useCheckoutSale();
 
-  // Add Product to Cart
+  // Intelligent Stock Add Logic
   const handleProductSelect = (product: ProductItem) => {
     const availableStocks = product.stocks?.filter((s) => s.quantity > 0) || [];
     if (availableStocks.length === 0) {
-      toast.error("Item out of stock");
+      toast.error("Item is completely out of stock");
       return;
     }
 
-    const isSerialized = availableStocks.some((s) => !!s.serialNumber);
+    // If product has multiple stocks (multiple batches or serialized devices), open selection dialog
+    const hasMultipleStocks = availableStocks.length > 1;
+    const hasSerials = availableStocks.some((s) => !!s.serialNumber);
 
-    if (isSerialized) {
-      setSerialProduct(product);
+    if (hasMultipleStocks || hasSerials) {
+      setDialogProduct(product);
     } else {
+      // Single Batch Item: Directly add to cart!
       const stock = availableStocks[0];
-      setCart((prev) => {
-        const existing = prev.find((item) => item.stockId === stock.id);
-        if (existing) {
-          if (existing.quantity >= stock.quantity) {
-            toast.error(`Cannot add more. Max stock is ${stock.quantity}`);
-            return prev;
-          }
-          return prev.map((item) =>
-            item.stockId === stock.id ? { ...item, quantity: item.quantity + 1 } : item
-          );
+      addStockToCart(product, stock);
+    }
+  };
+
+  // Helper to add specific stock record to cart
+  const addStockToCart = (product: ProductItem, stock: ProductStock) => {
+    setCart((prev) => {
+      const existing = prev.find((item) => item.stockId === stock.id);
+
+      if (existing) {
+        if (stock.serialNumber) {
+          toast.error(`Serial #${stock.serialNumber} is already in the cart`);
+          return prev;
         }
-        return [
-          ...prev,
-          {
-            stockId: stock.id,
-            productId: product.id,
-            name: product.name,
-            sku: product.sku,
-            batchNumber: stock.batchNumber,
-            price: stock.sellingPrice,
-            quantity: 1,
-            maxQuantity: stock.quantity,
-            withVat: stock.withVat,
-          },
-        ];
-      });
-      toast.success(`Added ${product.name}`);
-    }
+
+        if (existing.quantity >= stock.quantity) {
+          toast.error(`Cannot add more. Available in batch: ${stock.quantity}`);
+          return prev;
+        }
+
+        return prev.map((item) =>
+          item.stockId === stock.id ? { ...item, quantity: item.quantity + 1 } : item
+        );
+      }
+
+      return [
+        ...prev,
+        {
+          stockId: stock.id,
+          productId: product.id,
+          name: product.name,
+          sku: product.sku,
+          serialNumber: stock.serialNumber,
+          batchNumber: stock.batchNumber,
+          price: stock.sellingPrice,
+          costPrice: stock.costPrice,
+          defaultPrice: stock.sellingPrice,
+          quantity: 1,
+          maxQuantity: stock.serialNumber ? 1 : stock.quantity,
+          withVat: stock.withVat,
+        },
+      ];
+    });
+
+    toast.success(
+      stock.serialNumber
+        ? `Added Serial ${stock.serialNumber}`
+        : `Added ${product.name}`
+    );
   };
 
-  const handleSelectSerialStock = (stock: ProductStock) => {
-    if (!serialProduct) return;
-
-    if (cart.some((item) => item.stockId === stock.id)) {
-      toast.error(`Serial #${stock.serialNumber} is already in the cart`);
-      return;
-    }
-
-    setCart((prev) => [
-      ...prev,
-      {
-        stockId: stock.id,
-        productId: serialProduct.id,
-        name: serialProduct.name,
-        sku: serialProduct.sku,
-        serialNumber: stock.serialNumber,
-        price: stock.sellingPrice,
-        quantity: 1,
-        maxQuantity: 1,
-        withVat: stock.withVat,
-      },
-    ]);
-    toast.success(`Added Serial ${stock.serialNumber}`);
+  const handleSelectFromDialog = (stock: ProductStock) => {
+    if (!dialogProduct) return;
+    addStockToCart(dialogProduct, stock);
   };
 
+  // Quantity Controls
   const updateQuantity = (stockId: string, delta: number) => {
     setCart((prev) =>
       prev
@@ -126,7 +136,7 @@ export default function PosPage() {
             if (item.serialNumber) return item;
             const newQty = item.quantity + delta;
             if (newQty > item.maxQuantity) {
-              toast.error(`Stock limit reached (${item.maxQuantity})`);
+              toast.error(`Max stock available in this batch: ${item.maxQuantity}`);
               return item;
             }
             return newQty > 0 ? { ...item, quantity: newQty } : null;
@@ -155,10 +165,24 @@ export default function PosPage() {
     );
   };
 
+  // Negotiable Custom Unit Price Input
+  const handlePriceInput = (stockId: string, rawValue: string) => {
+    const parsed = parseFloat(rawValue) || 0;
+    setCart((prev) =>
+      prev.map((item) => {
+        if (item.stockId === stockId) {
+          return { ...item, price: parsed };
+        }
+        return item;
+      })
+    );
+  };
+
   const removeFromCart = (stockId: string) => {
     setCart((prev) => prev.filter((item) => item.stockId !== stockId));
   };
 
+  // Total Calculations
   const totalCartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
   const subtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const vatAmount = cart.reduce(
@@ -167,6 +191,7 @@ export default function PosPage() {
   );
   const total = subtotal + vatAmount;
 
+  // Checkout Execution
   const handleConfirmCheckout = async ({
     paymentMethod,
     customerName,
@@ -176,6 +201,15 @@ export default function PosPage() {
     customerName?: string;
     customerPhone?: string;
   }) => {
+    // Client-side cost floor pre-validation
+    const belowCostItem = cart.find((i) => i.price < i.costPrice);
+    if (belowCostItem) {
+      toast.error(
+        `Unit price for "${belowCostItem.name}" ($${belowCostItem.price.toFixed(2)}) is below wholesale cost ($${belowCostItem.costPrice.toFixed(2)}). Requires Manager Approval.`
+      );
+      return;
+    }
+
     try {
       const result = await checkoutSale.mutateAsync({
         items: cart.map((item) => ({
@@ -215,7 +249,7 @@ export default function PosPage() {
     }
   };
 
-  // Reusable Cart Content Component
+  // Reusable Cart Content View
   const CartContent = () => (
     <div className="flex flex-col h-full bg-card">
       <div className="p-3.5 border-b border-border flex items-center justify-between bg-muted/30">
@@ -236,77 +270,109 @@ export default function PosPage() {
             <p className="text-[10px] text-muted-foreground/60">Tap products to add</p>
           </div>
         ) : (
-          cart.map((item) => (
-            <div
-              key={item.stockId}
-              className="p-2.5 rounded-lg border border-border bg-background space-y-2"
-            >
-              <div className="flex justify-between items-start gap-2">
-                <div>
-                  <h4 className="text-xs font-medium text-foreground line-clamp-1">
-                    {item.name}
-                  </h4>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    {item.serialNumber ? (
-                      <span className="text-[10px] font-mono text-primary bg-primary/10 px-1 rounded font-semibold">
-                        SN: {item.serialNumber}
-                      </span>
-                    ) : (
-                      <span className="text-[10px] text-muted-foreground">
-                        Max: {item.maxQuantity}
-                      </span>
-                    )}
+          cart.map((item) => {
+            const isBelowCost = item.price < item.costPrice;
+
+            return (
+              <div
+                key={item.stockId}
+                className="p-2.5 rounded-lg border border-border bg-background space-y-2"
+              >
+                {/* Product Name & Identifier */}
+                <div className="flex justify-between items-start gap-2">
+                  <div>
+                    <h4 className="text-xs font-semibold text-foreground line-clamp-1">
+                      {item.name}
+                    </h4>
+                    <div className="flex items-center gap-1.5 mt-0.5 text-[10px] font-mono">
+                      {item.serialNumber ? (
+                        <span className="text-primary bg-primary/10 px-1 rounded font-bold flex items-center gap-1">
+                          <Barcode className="w-3 h-3" />
+                          SN: {item.serialNumber}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground flex items-center gap-1">
+                          <Boxes className="w-3 h-3" />
+                          {item.batchNumber ? `Batch: ${item.batchNumber}` : "Standard Batch"} (Max: {item.maxQuantity})
+                        </span>
+                      )}
+                    </div>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => removeFromCart(item.stockId)}
+                    className="text-muted-foreground hover:text-destructive p-1"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => removeFromCart(item.stockId)}
-                  className="text-muted-foreground hover:text-destructive p-1"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
 
-              <div className="flex justify-between items-center pt-1 border-t border-border/40">
-                <span className="text-xs font-bold text-foreground">
-                  ${(item.price * item.quantity).toFixed(2)}
-                </span>
-
-                {!item.serialNumber ? (
-                  <div className="flex items-center gap-1 bg-muted/80 rounded-md border border-border/80 p-0.5">
-                    <button
-                      type="button"
-                      onClick={() => updateQuantity(item.stockId, -1)}
-                      disabled={item.quantity <= 1}
-                      className="p-1 hover:text-primary disabled:opacity-30"
-                    >
-                      <Minus className="w-3 h-3" />
-                    </button>
-                    <input
-                      type="number"
-                      min={1}
-                      max={item.maxQuantity}
-                      value={item.quantity}
-                      onChange={(e) => handleQuantityInput(item.stockId, e.target.value)}
-                      className="w-10 text-center text-xs font-bold bg-background rounded border border-border/50 text-foreground py-0.5 focus:outline-none focus:ring-1 focus:ring-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => updateQuantity(item.stockId, 1)}
-                      disabled={item.quantity >= item.maxQuantity}
-                      className="p-1 hover:text-primary disabled:opacity-30"
-                    >
-                      <Plus className="w-3 h-3" />
-                    </button>
+                {/* Price Negotiation & Quantity Controls */}
+                <div className="flex items-center justify-between pt-1 border-t border-border/40 gap-2">
+                  {/* Negotiable Price Input */}
+                  <div className="flex items-center gap-1">
+                    <span className="text-[11px] text-muted-foreground">Price:</span>
+                    <div className="relative flex items-center">
+                      <span className="absolute left-1.5 text-xs text-muted-foreground font-mono">$</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min={0}
+                        value={item.price}
+                        onChange={(e) => handlePriceInput(item.stockId, e.target.value)}
+                        className={`w-20 pl-4 pr-1 py-0.5 text-xs font-bold font-mono rounded border bg-background focus:outline-none ${isBelowCost
+                            ? "border-destructive text-destructive bg-destructive/10 ring-1 ring-destructive"
+                            : "border-border text-foreground focus:ring-1 focus:ring-primary"
+                          }`}
+                      />
+                    </div>
                   </div>
-                ) : (
-                  <span className="text-[11px] font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded">
-                    Qty: 1
-                  </span>
+
+                  {/* Quantity Controls */}
+                  {!item.serialNumber ? (
+                    <div className="flex items-center gap-1 bg-muted/80 rounded-md border border-border/80 p-0.5">
+                      <button
+                        type="button"
+                        onClick={() => updateQuantity(item.stockId, -1)}
+                        disabled={item.quantity <= 1}
+                        className="p-1 hover:text-primary disabled:opacity-30"
+                      >
+                        <Minus className="w-3 h-3" />
+                      </button>
+                      <input
+                        type="number"
+                        min={1}
+                        max={item.maxQuantity}
+                        value={item.quantity}
+                        onChange={(e) => handleQuantityInput(item.stockId, e.target.value)}
+                        className="w-9 text-center text-xs font-bold font-mono bg-background rounded border border-border/50 text-foreground py-0.5 focus:outline-none focus:ring-1 focus:ring-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => updateQuantity(item.stockId, 1)}
+                        disabled={item.quantity >= item.maxQuantity}
+                        className="p-1 hover:text-primary disabled:opacity-30"
+                      >
+                        <Plus className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="text-[11px] font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                      Qty: 1
+                    </span>
+                  )}
+                </div>
+
+                {/* Below Cost Warning */}
+                {isBelowCost && (
+                  <div className="text-[10px] text-destructive font-semibold flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3" />
+                    Below wholesale cost (${item.costPrice.toFixed(2)}). Requires Manager Approval.
+                  </div>
                 )}
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 
@@ -329,7 +395,7 @@ export default function PosPage() {
 
         <button
           type="button"
-          disabled={cart.length === 0}
+          disabled={cart.length === 0 || cart.some((i) => i.price < i.costPrice)}
           onClick={() => setIsCheckoutOpen(true)}
           className="w-full h-11 rounded-xl bg-primary text-primary-foreground font-semibold text-xs transition-all active:scale-[0.98] disabled:opacity-50 shadow-sm"
         >
@@ -411,7 +477,7 @@ export default function PosPage() {
         </div>
       </div>
 
-      {/* Desktop Cart Column (Hidden on mobile/tablet) */}
+      {/* Desktop Cart Column */}
       <div className="hidden lg:flex w-80 xl:w-96 flex-shrink-0 flex-col bg-card rounded-2xl border border-border overflow-hidden">
         <CartContent />
       </div>
@@ -457,13 +523,13 @@ export default function PosPage() {
         </div>
       )}
 
-      {/* Modals */}
-      {serialProduct && (
+      {/* Intelligent Multi-Batch / Serial Dialog */}
+      {dialogProduct && (
         <PosSerialDialog
-          product={serialProduct}
-          isOpen={!!serialProduct}
-          onClose={() => setSerialProduct(null)}
-          onSelectStock={handleSelectSerialStock}
+          product={dialogProduct}
+          isOpen={!!dialogProduct}
+          onClose={() => setDialogProduct(null)}
+          onSelectStock={handleSelectFromDialog}
         />
       )}
 

@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   ShoppingCart,
   Receipt,
+  RotateCcw,
   Package,
   Boxes,
   Tags,
@@ -29,6 +30,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ThemeDropdown } from "@/components/ui/theme-toggle";
+import { Footer } from "@/components/layout/footer";
 
 interface NavItem {
   title: string;
@@ -58,7 +60,7 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
   const [isMobileOpen, setIsMobileOpen] = React.useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = React.useState(false);
 
-  // 1. Normalize User Roles & Permissions
+  // 1. Normalize Roles and Permissions
   const userRoles: string[] = Array.isArray(user.role)
     ? user.role
     : [user.role || "STAFF"];
@@ -106,7 +108,7 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
       ],
     },
 
-    // GROUP 2: POINT OF SALE & SALES (Cashier, Manager & Admin)
+    // GROUP 2: POINT OF SALE & REGISTRY
     {
       label: "Sales & POS",
       items: [
@@ -115,6 +117,12 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
           href: "/cashier/pos",
           icon: ShoppingCart,
           show: hasPerm("PROCESS_SALE") || hasPerm("CREATE_TRANSACTION") || isCashier || isManager || isAdmin,
+        },
+        {
+          title: "Returns & Warranty Desk",
+          href: "/cashier/returns",
+          icon: RotateCcw,
+          show: hasPerm("PROCESS_RETURN") || hasPerm("CREATE_TRANSACTION") || isCashier || isManager || isAdmin,
         },
         {
           title: isManager || isAdmin ? "Transactions & Invoices" : "Sales History",
@@ -145,7 +153,7 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
           title: "Categories",
           href: "/admin/categories",
           icon: Tags,
-          show: isAdmin, // Strictly ADMIN only (Hidden from Manager)
+          show: isAdmin, // Strictly ADMIN only
         },
       ],
     },
@@ -302,7 +310,7 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
             </div>
           </div>
 
-          {/* Top Right Avatar Button */}
+          {/* Top Right Profile Button */}
           <div className="relative">
             <button
               type="button"
@@ -317,7 +325,7 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
           </div>
         </header>
 
-        {/* User Flyout Menu with Multi-Role Workspaces */}
+        {/* User Flyout Menu */}
         {isUserMenuOpen && (
           <>
             <div
@@ -448,9 +456,12 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
           </>
         )}
 
-        {/* Dynamic Page Content */}
-        <main className="flex-1 p-4 sm:p-6 overflow-y-auto">
-          {children}
+        {/* Dynamic Page Content with Integrated Footer */}
+        <main className="flex-1 flex flex-col justify-between overflow-y-auto">
+          <div className="p-4 sm:p-6 flex-1">
+            {children}
+          </div>
+          <Footer />
         </main>
       </div>
     </div>
