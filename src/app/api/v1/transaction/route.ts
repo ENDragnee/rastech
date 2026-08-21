@@ -15,7 +15,12 @@ export const POST = CreateApiRoute({
     status: true,
     permission: "CREATE_TRANSACTION",
   },
-  handler: async (body: CreateTransactionInput, session: any, logger: any) => {
+  handler: async (
+    body: CreateTransactionInput,
+    session: any,
+    params: any,
+    logger: any,
+  ) => {
     return await CreateTransaction(body, session, logger);
   },
 });

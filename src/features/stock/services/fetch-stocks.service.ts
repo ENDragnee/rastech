@@ -8,10 +8,14 @@ export async function FetchStocks(req: FetchStockInput) {
   const whereClause: Prisma.StockWhereInput = {
     ...(search && {
       OR: [
+        { serialNumber: { contains: search, mode: "insensitive" } },
+        { batchNumber: { contains: search, mode: "insensitive" } },
         {
           products: {
-            name: { contains: search, mode: "insensitive" },
-            sku: { contains: search, mode: "insensitive" },
+            OR: [
+              { name: { contains: search, mode: "insensitive" } },
+              { sku: { contains: search, mode: "insensitive" } },
+            ],
           },
         },
       ],
@@ -25,12 +29,23 @@ export async function FetchStocks(req: FetchStockInput) {
         skip: offset,
         take: limit,
         orderBy: { [sort]: order },
+        include: {
+          products: {
+            select: {
+              id: true,
+              name: true,
+              sku: true,
+              warrantyDays: true,
+            },
+          },
+        },
       }),
       prisma.stock.count({
         where: whereClause,
       }),
     ]);
-    const totalPages = Math.ceil(count / limit);
+
+    const totalPages = Math.ceil(count / limit) || 1;
 
     return {
       data: stock,

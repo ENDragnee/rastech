@@ -19,11 +19,12 @@ export const UpdateProductSchema = z.object({
 export type UpdateProductInput = z.infer<typeof UpdateProductSchema>;
 
 export const FetchProductsSchema = z.object({
-  page: z.coerce.number().int().min(1).positive().default(1),
-  limit: z.coerce.number().int().min(5).max(50).positive().default(10),
-  sort: z.enum(["created_at", "name", "sku"]).default("name"),
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(10),
   order: z.enum(["asc", "desc"]).default("desc"),
-  search: z.string().min(2).optional(),
+  sort: z.enum(["createdAt", "name", "sku"]).default("createdAt"),
+  search: z.string().trim().optional(),
+  categoryId: z.string().trim().optional(),
 });
 
 export type FetchProductsInput = z.infer<typeof FetchProductsSchema>;

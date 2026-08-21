@@ -47,8 +47,8 @@ export async function UserNameSignIn(
     throw new Error("Invalid username or password!");
   }
 
-  const userRoles = user.roles.map((ru) => ru.guardName);
-  const rolePermissions = user.permissions.map((pr) => pr.guardName);
+  const userRoles = user.roles.map((ru) => ru.name);
+  const rolePermissions = user.permissions.map((pr) => pr.name);
   reqLogger.info({ userId: user.id }, "User signed in successfully");
 
   await prisma.log.create({

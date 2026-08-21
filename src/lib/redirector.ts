@@ -1,6 +1,5 @@
-import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { authOptions } from "./auth-options";
+import { GetSession } from "./session";
 
 // Define the role constants to match your database exactly
 export const ROLES = {
@@ -10,7 +9,7 @@ export const ROLES = {
 } as const;
 
 export async function RoleRedirector() {
-  const session = await getServerSession(authOptions);
+  const session = await GetSession();
 
   if (!session?.user) {
     redirect("/auth/signin");

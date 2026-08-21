@@ -106,10 +106,11 @@ model Category {
 }
 
 model Product {
-  id          String  @id @default(cuid())
-  name        String
-  sku         String? @unique
-  description String?
+  id           String  @id @default(cuid())
+  name         String
+  sku          String? @unique
+  description  String?
+  warrantyDays Int?    @default(0)
 
   categoryId String
   category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
@@ -158,6 +159,12 @@ model Transaction {
   quantity      Int
   price         Float
 
+  paymentMethod PaymentMethod?
+  customerName  String?
+  customerPhone String?
+
+  warrantyEndsAt DateTime?
+
   stockId String
   stocks  Stock  @relation(fields: [stockId], references: [id], onDelete: Cascade)
 
@@ -175,6 +182,13 @@ enum TransactionType {
   PURCHASED
   RETURNED
   DEFECTIVE
+  ADJUSTMENT_LOSS
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  TRANSFER
   ADJUSTMENT_LOSS
 }
 
