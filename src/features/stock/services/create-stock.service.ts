@@ -37,11 +37,10 @@ export async function CreateStock(
       data: {
         type: "CREATED_STOCK",
         severity: "INFO",
-        message: `User: ${userName} created stock ${newStock.id}`,
+        message: `User: ${userId} created stock`,
         userId,
       },
     });
-
 
     const invoiceNumber = GenerateCode();
     await tx.transaction.create({
@@ -57,4 +56,5 @@ export async function CreateStock(
     return newStock;
   });
   logger.info({ stockId: stock.id }, "Stock created successfully");
+  return stock;
 }

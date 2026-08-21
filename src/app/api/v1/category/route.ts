@@ -13,7 +13,12 @@ export const POST = CreateApiRoute({
     status: true,
     permission: "CREATE_CATEGORY",
   },
-  handler: async (body: CreateCategoryInput, session: any, logger: any) => {
+  handler: async (
+    body: CreateCategoryInput,
+    session: any,
+    params: any,
+    logger: any,
+  ) => {
     return await CreateCategory(body, session, logger);
   },
 });

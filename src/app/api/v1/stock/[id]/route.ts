@@ -31,6 +31,7 @@ export const DELETE = CreateApiRoute({
     permission: "DELETE_STOCK",
   },
   handler: async (
+    body: any,
     session: any,
     params: DynamicApiRouteInput | undefined,
     logger: any,

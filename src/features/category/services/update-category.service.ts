@@ -23,29 +23,25 @@ export async function UpdateCategory(
   const { name, description } = body;
   const { id: userId, userName } = session;
 
-  try {
-    const category = await prisma.$transaction(async (tx) => {
-      await tx.log.create({
-        data: {
-          type: "CATEGORY_UPDATED",
-          severity: "INFO",
-          message: `User ${userName} has updated category ${id}`,
-          userId,
-        },
-      });
-      return await tx.category.update({
-        where: { id },
-        data: {
-          ...(name && { name }),
-          ...(description && { description }),
-        },
-      });
+  const category = await prisma.$transaction(async (tx) => {
+    await tx.log.create({
+      data: {
+        type: "CATEGORY_UPDATED",
+        severity: "INFO",
+        message: `User ${userName} has updated category ${id}`,
+        userId,
+      },
     });
+    return await tx.category.update({
+      where: { id },
+      data: {
+        ...(name && { name }),
+        ...(description && { description }),
+      },
+    });
+  });
 
-    logger.info({ id }, "Category updated successfully");
+  logger.info({ id }, "Category updated successfully");
 
-    return category;
-  } catch (err: any) {
-    throw err;
-  }
+  return category;
 }

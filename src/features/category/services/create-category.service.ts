@@ -14,11 +14,11 @@ export async function CreateCategory(
 
   try {
     const category = await prisma.$transaction(async (tx) => {
-      await prisma.log.create({
+      await tx.log.create({
         data: {
           type: "CATEGORY_CREATE",
           severity: "INFO",
-          message: `User ${userName} has created category ${category.name}`,
+          message: `User ${userId} has created category`,
           userId,
         },
       });
@@ -31,14 +31,7 @@ export async function CreateCategory(
     });
 
     logger.info({ userName }, "Category created successfully");
-    await prisma.log.create({
-      data: {
-        type: "CATEGORY_CREATE",
-        severity: "INFO",
-        message: `User ${userName} has created category ${category.name}`,
-        userId,
-      },
-    });
+    return category;
   } catch (err: any) {
     if (err.code === "P2002") {
       logger.warn({ userId }, "Duplicate category name request blocked");

@@ -1,10 +1,20 @@
-import z from "zod";
+import { z } from "zod";
+
+export const ReportTypeEnum = z.enum([
+  "STOCK_STATUS",
+  "SALES_SUMMARY",
+  "DEFECTS_LOSSES",
+  "TAX_VAT",
+  "WARRANTY_RMA",
+]);
+
+export type ReportType = z.infer<typeof ReportTypeEnum>;
 
 export const FetchReportSchema = z.object({
-  startDate: z.string().datetime().optional(),
-  endDate: z.string().datetime().optional(),
+  type: ReportTypeEnum.default("STOCK_STATUS"),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
   categoryId: z.string().optional(),
-  type: z.enum(["STOCK_STATUS", "SALES_SUMMARY", "DEFECTS"]).default("STOCK_STATUS"),
 });
 
 export type FetchReportInput = z.infer<typeof FetchReportSchema>;

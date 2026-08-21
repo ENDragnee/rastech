@@ -1,19 +1,23 @@
-import z from "zod";
+import { z } from "zod";
 
 export const CreateProductSchema = z.object({
-  name: z.string(),
-  sku: z.string().min(3, "Minimum of 3 characters for SKU").optional(),
+  name: z.string().min(1, "Product name is required"),
+  sku: z.string().min(3, "Minimum of 3 characters for SKU"),
   description: z.string().optional().nullable(),
-  categoryId: z.cuid2(),
+  categoryId: z.string().min(1, "Valid Category ID is required"),
+  warrantyDays: z.coerce.number().int().min(0).default(0).optional(),
+  withVat: z.boolean().default(true).optional(),
 });
 
 export type CreateProductInput = z.infer<typeof CreateProductSchema>;
 
 export const UpdateProductSchema = z.object({
-  name: z.string().optional(),
+  name: z.string().min(1).optional(),
   sku: z.string().min(3, "Minimum of 3 characters for SKU").optional(),
   description: z.string().optional().nullable(),
-  categoryId: z.cuid2().optional(),
+  categoryId: z.string().min(1, "Valid Category ID is required").optional(),
+  warrantyDays: z.coerce.number().int().min(0).optional(),
+  withVat: z.boolean().optional(),
 });
 
 export type UpdateProductInput = z.infer<typeof UpdateProductSchema>;

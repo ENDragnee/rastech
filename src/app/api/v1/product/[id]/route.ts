@@ -16,8 +16,8 @@ export const PATCH = CreateApiRoute({
   },
   handler: async (
     body: UpdateProductInput,
-    params: DynamicApiRouteInput | undefined,
     session: any,
+    params: DynamicApiRouteInput | undefined,
     logger: any,
   ) => {
     return await UpdateProduct(body, session, params, logger);
@@ -31,8 +31,9 @@ export const DELETE = CreateApiRoute({
     permission: "DELETE_PRODUCT",
   },
   handler: async (
-    params: DynamicApiRouteInput | undefined,
+    body: any,
     session: any,
+    params: DynamicApiRouteInput | undefined,
     logger: any,
   ) => {
     return await DeleteProduct(session, params, logger);

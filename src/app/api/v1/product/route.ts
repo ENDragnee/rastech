@@ -15,7 +15,12 @@ export const POST = CreateApiRoute({
     status: true,
     permission: "CREATE_PRODUCT",
   },
-  handler: async (body: CreateProductInput, session: any, logger: any) => {
+  handler: async (
+    body: CreateProductInput,
+    session: any,
+    params: any,
+    logger: any,
+  ) => {
     return await CreateProduct(body, session, logger);
   },
 });
