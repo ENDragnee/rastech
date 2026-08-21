@@ -144,7 +144,7 @@ export default function CashierReturnsPage() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className="font-bold text-foreground">${tx.price.toFixed(2)}</span>
+                  <span className="font-bold text-foreground"> ETB {tx.price.toFixed(2)}</span>
                   <span className="text-[10px] block text-primary font-medium">Select Invoice</span>
                 </div>
               </button>
@@ -189,7 +189,7 @@ export default function CashierReturnsPage() {
                   )}
                 </div>
               </div>
-              <span className="font-mono font-bold text-sm text-foreground">${selectedTx.price.toFixed(2)}</span>
+              <span className="font-mono font-bold text-sm text-foreground"> ETB {selectedTx.price.toFixed(2)}</span>
             </div>
 
             <div className="flex items-center justify-between pt-2 border-t border-border/50">

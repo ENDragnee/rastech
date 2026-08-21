@@ -188,8 +188,7 @@ export default function ManagerTransactionsPage() {
             <span className="text-xs font-medium">Filtered Sales Volume</span>
             <TrendingUp className="w-4 h-4 text-emerald-500" />
           </div>
-          <div className="text-xl sm:text-2xl font-bold text-foreground">
-            ${totalSalesVolume.toFixed(2)}
+          <div className="text-xl sm:text-2xl font-bold text-foreground"> ETB {totalSalesVolume.toFixed(2)}
           </div>
           <span className="text-[10px] text-muted-foreground block">
             From {salesItems.length} completed sales
@@ -201,8 +200,7 @@ export default function ManagerTransactionsPage() {
             <span className="text-xs font-medium">Average Order Value (AOV)</span>
             <Layers className="w-4 h-4 text-primary" />
           </div>
-          <div className="text-xl sm:text-2xl font-bold text-foreground">
-            ${averageOrderValue.toFixed(2)}
+          <div className="text-xl sm:text-2xl font-bold text-foreground"> ETB {averageOrderValue.toFixed(2)}
           </div>
           <span className="text-[10px] text-muted-foreground block">Per retail transaction</span>
         </div>
@@ -465,8 +463,7 @@ export default function ManagerTransactionsPage() {
                       </td>
 
                       {/* Total Price */}
-                      <td className="p-3.5 font-bold text-foreground whitespace-nowrap">
-                        ${tx.price.toFixed(2)}
+                      <td className="p-3.5 font-bold text-foreground whitespace-nowrap"> ETB {tx.price.toFixed(2)}
                       </td>
 
                       {/* Actions */}

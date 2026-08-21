@@ -104,11 +104,10 @@ export function PosSerialDialog({
                 </div>
 
                 <div className="text-right font-mono">
-                  <span className="text-xs font-bold text-primary block">
-                    ${stock.sellingPrice.toFixed(2)}
+                  <span className="text-xs font-bold text-primary block"> ETB {stock.sellingPrice.toFixed(2)}
                   </span>
                   <span className="text-[10px] text-muted-foreground">
-                    Cost: ${stock.costPrice.toFixed(2)}
+                    Cost: ETB {stock.costPrice.toFixed(2)}
                   </span>
                 </div>
               </button>

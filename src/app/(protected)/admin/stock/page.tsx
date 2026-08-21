@@ -76,8 +76,8 @@ export default function StockPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-muted-foreground text-xs">Cost: ${item.cost.toFixed(2)}</div>
-                    <div className="font-medium text-foreground mt-0.5">Price: ${item.price.toFixed(2)}</div>
+                    <div className="text-muted-foreground text-xs">Cost: ETB {item.cost.toFixed(2)}</div>
+                    <div className="font-medium text-foreground mt-0.5">Price: ETB {item.price.toFixed(2)}</div>
                   </td>
                   <td className="px-6 py-4">
                     {item.vat ? (

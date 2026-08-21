@@ -74,7 +74,7 @@ export function PosReceiptDialog({ isOpen, onClose, invoiceData }: PosReceiptDia
                   )}
                   <p className="text-[10px] text-muted-foreground">Qty: {item.quantity}</p>
                 </div>
-                <span className="font-semibold">${(item.price * item.quantity).toFixed(2)}</span>
+                <span className="font-semibold"> ETB {(item.price * item.quantity).toFixed(2)}</span>
               </div>
             ))}
           </div>
@@ -82,15 +82,15 @@ export function PosReceiptDialog({ isOpen, onClose, invoiceData }: PosReceiptDia
           <div className="space-y-1 text-[11px] pt-1">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Subtotal</span>
-              <span>${invoiceData.subtotal.toFixed(2)}</span>
+              <span> ETB {invoiceData.subtotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">VAT (15%)</span>
-              <span>${invoiceData.vat.toFixed(2)}</span>
+              <span> ETB {invoiceData.vat.toFixed(2)}</span>
             </div>
             <div className="flex justify-between font-bold text-sm pt-1 border-t border-border">
               <span>Total Paid</span>
-              <span>${invoiceData.total.toFixed(2)}</span>
+              <span> ETB {invoiceData.total.toFixed(2)}</span>
             </div>
           </div>
         </div>

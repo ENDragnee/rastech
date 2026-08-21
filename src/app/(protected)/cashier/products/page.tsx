@@ -165,8 +165,7 @@ export default function CashierProductsPage() {
                         </span>
                       )}
                     </td>
-                    <td className="p-3.5 font-bold text-foreground text-right whitespace-nowrap text-sm">
-                      ${price.toFixed(2)}
+                    <td className="p-3.5 font-bold text-foreground text-right whitespace-nowrap text-sm"> ETB {price.toFixed(2)}
                     </td>
                   </tr>
                 );

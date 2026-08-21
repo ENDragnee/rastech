@@ -158,7 +158,7 @@ export async function CreateTransaction(
       data: {
         type: `TRANSACTION_${type}`,
         severity: "INFO",
-        message: `User @${userName} processed ${type} for "${stock.products.name}" (Qty: ${quantity}, Total: $${price.toFixed(2)}). ${reason ? `Reason: ${reason}` : ""}`,
+        message: `User @${userName} processed ${type} for "${stock.products.name}" (Qty: ${quantity}, Total: ETB ${price.toFixed(2)}). ${reason ? `Reason: ${reason}` : ""}`,
         userId,
         targetId: transaction.id,
         targetName: stock.products.name,

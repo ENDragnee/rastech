@@ -39,7 +39,7 @@ export async function ProcessSaleCheckout(
       // 2. Hard Cost Floor Guardrail: Prevent selling below wholesale cost without manager approval
       if (item.price < stock.costPrice && !isManagerOrAdmin) {
         throw new Error(
-          `Price violation: Unit price ($${item.price.toFixed(2)}) cannot be lower than the wholesale cost ($${stock.costPrice.toFixed(2)}) for "${stock.products.name}". Requires Manager Approval.`,
+          `Price violation: Unit price (ETB ${item.price.toFixed(2)}) cannot be lower than the wholesale cost (ETB ${stock.costPrice.toFixed(2)}) for "${stock.products.name}". Requires Manager Approval.`,
         );
       }
 

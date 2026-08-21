@@ -192,8 +192,7 @@ export default function CashierStockPage() {
                   </td>
 
                   {/* Price */}
-                  <td className="p-3.5 font-bold text-foreground text-right whitespace-nowrap text-sm">
-                    ${stock.sellingPrice.toFixed(2)}
+                  <td className="p-3.5 font-bold text-foreground text-right whitespace-nowrap text-sm"> ETB {stock.sellingPrice.toFixed(2)}
                   </td>
                 </tr>
               ))

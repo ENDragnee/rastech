@@ -249,8 +249,7 @@ export default function CashierTransactionsPage() {
                       </td>
 
                       {/* Total Price */}
-                      <td className="p-3.5 font-bold text-foreground whitespace-nowrap">
-                        ${tx.price.toFixed(2)}
+                      <td className="p-3.5 font-bold text-foreground whitespace-nowrap"> ETB {tx.price.toFixed(2)}
                       </td>
 
                       {/* Actions */}

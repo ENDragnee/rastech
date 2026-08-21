@@ -36,8 +36,7 @@ export default function CashierDashboardPage() {
             <span className="text-xs font-medium">Recent Sales Volume</span>
             <Banknote className="w-4 h-4 text-emerald-500" />
           </div>
-          <span className="text-2xl font-bold text-foreground">
-            ${totalSalesToday.toFixed(2)}
+          <span className="text-2xl font-bold text-foreground"> ETB {totalSalesToday.toFixed(2)}
           </span>
         </div>
 
@@ -78,7 +77,7 @@ export default function CashierDashboardPage() {
                   {tx.stocks?.products?.name || "Product"}
                 </span>
               </div>
-              <span className="font-bold">${tx.price.toFixed(2)}</span>
+              <span className="font-bold"> ETB {tx.price.toFixed(2)}</span>
             </div>
           ))}
         </div>

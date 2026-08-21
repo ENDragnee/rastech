@@ -96,7 +96,7 @@ export function ReportPreviewDialog({
                 </span>
                 <span className="text-base font-bold text-foreground font-mono">
                   {typeof val === "number" && key.toLowerCase().includes("value") || key.toLowerCase().includes("revenue") || key.toLowerCase().includes("profit") || key.toLowerCase().includes("cost") || key.toLowerCase().includes("liability")
-                    ? `$${Number(val).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                    ? `ETB ${Number(val).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                     : typeof val === "number" && key.includes("Percent")
                       ? `${Number(val).toFixed(1)}%`
                       : String(val)}
@@ -126,7 +126,7 @@ export function ReportPreviewDialog({
                         {typeof val === "boolean"
                           ? val ? "VAT (15%)" : "Exempt"
                           : typeof val === "number" && String(val).includes(".")
-                            ? `$${Number(val).toFixed(2)}`
+                            ? `ETB ${Number(val).toFixed(2)}`
                             : typeof val === "string" && val.includes("T") && val.includes("Z")
                               ? new Date(val).toLocaleDateString()
                               : String(val)}

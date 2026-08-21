@@ -248,7 +248,7 @@ export default function ReportsPage() {
                     </span>
                     <span className="font-bold text-foreground font-mono">
                       {typeof v === "number" && (k.toLowerCase().includes("value") || k.toLowerCase().includes("revenue") || k.toLowerCase().includes("profit") || k.toLowerCase().includes("cost"))
-                        ? `$${Number(v).toFixed(2)}`
+                        ? `ETB ${Number(v).toFixed(2)}`
                         : typeof v === "number" && k.includes("Percent")
                           ? `${Number(v).toFixed(1)}%`
                           : String(v)}

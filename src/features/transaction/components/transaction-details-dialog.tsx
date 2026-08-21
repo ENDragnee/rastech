@@ -101,7 +101,7 @@ export function TransactionDetailsDialog({
               </div>
               <div>
                 <span className="text-muted-foreground block">Total Amount</span>
-                <span className="font-bold text-foreground text-sm">${transaction.price.toFixed(2)}</span>
+                <span className="font-bold text-foreground text-sm"> ETB {transaction.price.toFixed(2)}</span>
               </div>
               <div>
                 <span className="text-muted-foreground block">Payment Method</span>

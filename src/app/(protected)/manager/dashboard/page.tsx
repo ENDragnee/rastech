@@ -137,12 +137,11 @@ export default function ManagerDashboardPage() {
               <DollarSign className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-bold text-foreground">
-            ${performance.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+          <div className="text-2xl font-bold text-foreground"> ETB {performance.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
           </div>
           <div className="flex items-center gap-1 text-[11px] text-emerald-500 font-semibold">
             <TrendingUp className="w-3.5 h-3.5" />
-            <span>${performance.grossProfit.toFixed(2)} Profit ({performance.grossMarginPercentage.toFixed(1)}% margin)</span>
+            <span> ETB {performance.grossProfit.toFixed(2)} Profit ({performance.grossMarginPercentage.toFixed(1)}% margin)</span>
           </div>
         </div>
 
@@ -154,11 +153,10 @@ export default function ManagerDashboardPage() {
               <Boxes className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-bold text-foreground">
-            ${performance.currentStockValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+          <div className="text-2xl font-bold text-foreground"> ETB {performance.currentStockValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
           </div>
           <div className="text-[11px] text-muted-foreground">
-            Potential Retail: <span className="text-foreground font-medium">${performance.potentialRevenue.toLocaleString()}</span>
+            Potential Retail: <span className="text-foreground font-medium"> ETB {performance.potentialRevenue.toLocaleString()}</span>
           </div>
         </div>
 
@@ -212,9 +210,9 @@ export default function ManagerDashboardPage() {
               <BarChart data={timeline}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.6} />
                 <XAxis dataKey="label" stroke="var(--muted-foreground)" fontSize={10} tickLine={false} axisLine={false} />
-                <YAxis stroke="var(--muted-foreground)" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(val) => `$${val}`} />
+                <YAxis stroke="var(--muted-foreground)" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(val) => `ETB ${val}`} />
                 <Tooltip
-                  formatter={(val: any) => [`$${Number(val).toFixed(2)}`]}
+                  formatter={(val: any) => [`ETB ${Number(val).toFixed(2)}`]}
                   contentStyle={{
                     backgroundColor: "var(--card)",
                     borderColor: "var(--border)",
@@ -252,9 +250,9 @@ export default function ManagerDashboardPage() {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.6} />
                 <XAxis dataKey="label" stroke="var(--muted-foreground)" fontSize={10} tickLine={false} axisLine={false} />
-                <YAxis stroke="var(--muted-foreground)" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(val) => `$${val}`} />
+                <YAxis stroke="var(--muted-foreground)" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(val) => `ETB ${val}`} />
                 <Tooltip
-                  formatter={(val: any) => [`$${Number(val).toFixed(2)}`]}
+                  formatter={(val: any) => [`ETB ${Number(val).toFixed(2)}`]}
                   contentStyle={{
                     backgroundColor: "var(--card)",
                     borderColor: "var(--border)",
@@ -340,7 +338,7 @@ export default function ManagerDashboardPage() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-foreground">${item.revenue.toFixed(2)}</p>
+                    <p className="font-bold text-foreground"> ETB {item.revenue.toFixed(2)}</p>
                     <span className="text-[10px] text-muted-foreground">{item.quantity} units sold</span>
                   </div>
                 </div>
@@ -372,7 +370,7 @@ export default function ManagerDashboardPage() {
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(value: any) => [`$${Number(value).toFixed(2)}`, "Revenue"]}
+                    formatter={(value: any) => [`ETB ${Number(value).toFixed(2)}`, "Revenue"]}
                     contentStyle={{
                       backgroundColor: "var(--card)",
                       borderColor: "var(--border)",
@@ -394,7 +392,7 @@ export default function ManagerDashboardPage() {
                     />
                     <span className="text-muted-foreground truncate max-w-[120px]">{cat.categoryName}</span>
                   </div>
-                  <span className="font-semibold text-foreground">${cat.revenue.toFixed(2)}</span>
+                  <span className="font-semibold text-foreground"> ETB {cat.revenue.toFixed(2)}</span>
                 </div>
               ))}
             </div>
@@ -439,8 +437,8 @@ export default function ManagerDashboardPage() {
                     </td>
                     <td className="p-3.5 text-muted-foreground">{item.categoryName}</td>
                     <td className="p-3.5 text-center font-semibold">{item.unitsSold}</td>
-                    <td className="p-3.5 font-semibold text-foreground">${item.revenue.toFixed(2)}</td>
-                    <td className="p-3.5 font-semibold text-emerald-500">${item.grossProfit.toFixed(2)}</td>
+                    <td className="p-3.5 font-semibold text-foreground"> ETB {item.revenue.toFixed(2)}</td>
+                    <td className="p-3.5 font-semibold text-emerald-500"> ETB {item.grossProfit.toFixed(2)}</td>
                     <td className="p-3.5 font-mono">{item.marginPercentage.toFixed(1)}%</td>
                     <td className="p-3.5 text-center font-bold">{item.currentStock}</td>
                     <td className="p-3.5 text-right">

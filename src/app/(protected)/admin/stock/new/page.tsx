@@ -136,7 +136,7 @@ export default function AddStockPage() {
             <div className="space-y-3">
               <label className="text-sm font-semibold text-foreground">Cost Price</label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">$</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">ETB</span>
                 <input 
                   type="number" 
                   step="0.01"
@@ -151,7 +151,7 @@ export default function AddStockPage() {
             <div className="space-y-3">
               <label className="text-sm font-semibold text-foreground">Selling Price</label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">$</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">ETB</span>
                 <input 
                   type="number" 
                   step="0.01"

@@ -91,8 +91,7 @@ export default function ManagerStockPage() {
             <span className="text-xs font-medium">Warehouse Asset Value (Cost)</span>
             <DollarSign className="w-4 h-4 text-primary" />
           </div>
-          <div className="text-xl sm:text-2xl font-bold text-foreground font-mono">
-            ${totalCostValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+          <div className="text-xl sm:text-2xl font-bold text-foreground font-mono"> ETB {totalCostValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
           </div>
           <span className="text-[10px] text-muted-foreground block">Wholesale capital basis</span>
         </div>
@@ -102,8 +101,7 @@ export default function ManagerStockPage() {
             <span className="text-xs font-medium">Realizable Retail Potential</span>
             <TrendingUp className="w-4 h-4 text-emerald-500" />
           </div>
-          <div className="text-xl sm:text-2xl font-bold text-emerald-500 font-mono">
-            ${potentialRetailValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+          <div className="text-xl sm:text-2xl font-bold text-emerald-500 font-mono"> ETB {potentialRetailValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
           </div>
           <span className="text-[10px] text-muted-foreground block">Expected sales revenue</span>
         </div>
@@ -286,13 +284,11 @@ export default function ManagerStockPage() {
                       </td>
 
                       {/* Cost Price */}
-                      <td className="p-3.5 font-mono text-muted-foreground whitespace-nowrap">
-                        ${st.costPrice.toFixed(2)}
+                      <td className="p-3.5 font-mono text-muted-foreground whitespace-nowrap"> ETB {st.costPrice.toFixed(2)}
                       </td>
 
                       {/* Retail Price */}
-                      <td className="p-3.5 font-mono font-bold text-foreground whitespace-nowrap">
-                        ${st.sellingPrice.toFixed(2)}
+                      <td className="p-3.5 font-mono font-bold text-foreground whitespace-nowrap"> ETB {st.sellingPrice.toFixed(2)}
                       </td>
 
                       {/* Markup % */}

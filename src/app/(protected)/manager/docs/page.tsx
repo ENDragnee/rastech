@@ -77,7 +77,7 @@ export default function ManagerMetricsDocsPage() {
           <div className="space-y-2">
             <div className="flex justify-between text-xs">
               <span className="text-muted-foreground">Target Sales Revenue</span>
-              <span className="font-bold text-foreground font-mono">${simSales.toLocaleString()}</span>
+              <span className="font-bold text-foreground font-mono"> ETB {simSales.toLocaleString()}</span>
             </div>
             <input
               type="range"
@@ -113,7 +113,7 @@ export default function ManagerMetricsDocsPage() {
           <div className="space-y-2">
             <div className="flex justify-between text-xs">
               <span className="text-muted-foreground">Warehouse Stock Valuation</span>
-              <span className="font-bold text-foreground font-mono">${simStockValue.toLocaleString()}</span>
+              <span className="font-bold text-foreground font-mono"> ETB {simStockValue.toLocaleString()}</span>
             </div>
             <input
               type="range"
@@ -132,16 +132,14 @@ export default function ManagerMetricsDocsPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-primary/20">
           <div className="p-3 rounded-xl bg-card border border-border">
             <span className="text-[10px] text-muted-foreground">Projected Gross Profit</span>
-            <div className="text-base font-bold text-emerald-500 font-mono">
-              ${simProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+            <div className="text-base font-bold text-emerald-500 font-mono"> ETB {simProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })}
             </div>
             <span className="text-[10px] text-muted-foreground font-mono">{simMargin.toFixed(1)}% margin</span>
           </div>
 
           <div className="p-3 rounded-xl bg-card border border-border">
             <span className="text-[10px] text-muted-foreground">Cost of Goods (COGS)</span>
-            <div className="text-base font-bold text-foreground font-mono">
-              ${simCOGS.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+            <div className="text-base font-bold text-foreground font-mono"> ETB {simCOGS.toLocaleString(undefined, { maximumFractionDigits: 0 })}
             </div>
             <span className="text-[10px] text-muted-foreground">Wholesale expense</span>
           </div>
@@ -204,7 +202,7 @@ export default function ManagerMetricsDocsPage() {
               Margin is the percentage of selling price that is profit. Markup is the percentage added on top of wholesale cost.
             </p>
             <div className="text-[11px] space-y-1 text-muted-foreground border-t border-border pt-2">
-              <p><strong>Example:</strong> Bought for $100, sold for $125.</p>
+              <p><strong>Example:</strong> Bought for ETB 100, sold for ETB 125.</p>
               <p><strong>Markup:</strong> 25% | <strong>Margin:</strong> 20%</p>
             </div>
           </div>

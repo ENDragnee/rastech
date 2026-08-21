@@ -64,8 +64,7 @@ export function ProductCard({ product, onSelect }: ProductCardProps) {
             </span>
           ) : null}
         </div>
-        <span className="font-bold text-base text-foreground">
-          ${unitPrice.toFixed(2)}
+        <span className="font-bold text-base text-foreground"> ETB {unitPrice.toFixed(2)}
         </span>
       </div>
     </button>

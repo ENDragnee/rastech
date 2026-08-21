@@ -163,7 +163,7 @@ export function ManagerAdjustmentDialog({
                             {st.quantity} in stock
                           </span>
                           <span className="text-[10px] block text-muted-foreground">
-                            Cost: ${st.costPrice}
+                            Cost: ETB {st.costPrice}
                           </span>
                         </div>
                       </button>

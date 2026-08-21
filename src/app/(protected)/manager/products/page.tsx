@@ -234,8 +234,7 @@ export default function ManagerProductsPage() {
                       </td>
 
                       {/* Price */}
-                      <td className="p-3.5 font-bold text-foreground whitespace-nowrap">
-                        ${price.toFixed(2)}
+                      <td className="p-3.5 font-bold text-foreground whitespace-nowrap"> ETB {price.toFixed(2)}
                       </td>
 
                       {/* Actions */}

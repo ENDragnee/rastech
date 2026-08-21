@@ -47,7 +47,7 @@ export function PosCheckoutDialog({
             <h2 className="text-base font-semibold text-foreground">Complete Checkout</h2>
             <p className="text-xs text-muted-foreground mt-0.5">
               Total Amount:{" "}
-              <span className="font-bold text-primary text-sm">${totalAmount.toFixed(2)}</span>
+              <span className="font-bold text-primary text-sm"> ETB {totalAmount.toFixed(2)}</span>
             </p>
           </div>
           <button

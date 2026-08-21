@@ -205,7 +205,7 @@ export default function PosPage() {
     const belowCostItem = cart.find((i) => i.price < i.costPrice);
     if (belowCostItem) {
       toast.error(
-        `Unit price for "${belowCostItem.name}" ($${belowCostItem.price.toFixed(2)}) is below wholesale cost ($${belowCostItem.costPrice.toFixed(2)}). Requires Manager Approval.`
+        `Unit price for "${belowCostItem.name}" (ETB ${belowCostItem.price.toFixed(2)}) is below wholesale cost (ETB ${belowCostItem.costPrice.toFixed(2)}). Requires Manager Approval.`
       );
       return;
     }
@@ -313,7 +313,7 @@ export default function PosPage() {
                   <div className="flex items-center gap-1">
                     <span className="text-[11px] text-muted-foreground">Price:</span>
                     <div className="relative flex items-center">
-                      <span className="absolute left-1.5 text-xs text-muted-foreground font-mono">$</span>
+                      <span className="absolute left-1.5 text-xs text-muted-foreground font-mono">ETB</span>
                       <input
                         type="number"
                         step="0.01"
@@ -367,7 +367,7 @@ export default function PosPage() {
                 {isBelowCost && (
                   <div className="text-[10px] text-destructive font-semibold flex items-center gap-1">
                     <AlertTriangle className="w-3 h-3" />
-                    Below wholesale cost (${item.costPrice.toFixed(2)}). Requires Manager Approval.
+                    Below wholesale cost (ETB {item.costPrice.toFixed(2)}). Requires Manager Approval.
                   </div>
                 )}
               </div>
@@ -381,15 +381,15 @@ export default function PosPage() {
         <div className="space-y-1 text-xs">
           <div className="flex justify-between text-muted-foreground">
             <span>Subtotal</span>
-            <span>${subtotal.toFixed(2)}</span>
+            <span> ETB {subtotal.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-muted-foreground">
             <span>VAT (15%)</span>
-            <span>${vatAmount.toFixed(2)}</span>
+            <span> ETB {vatAmount.toFixed(2)}</span>
           </div>
           <div className="flex justify-between font-bold text-sm text-foreground pt-1.5 border-t border-border/60">
             <span>Total</span>
-            <span>${total.toFixed(2)}</span>
+            <span> ETB {total.toFixed(2)}</span>
           </div>
         </div>
 
@@ -399,7 +399,7 @@ export default function PosPage() {
           onClick={() => setIsCheckoutOpen(true)}
           className="w-full h-11 rounded-xl bg-primary text-primary-foreground font-semibold text-xs transition-all active:scale-[0.98] disabled:opacity-50 shadow-sm"
         >
-          Checkout (${total.toFixed(2)})
+          Checkout (ETB {total.toFixed(2)})
         </button>
       </div>
     </div>
@@ -496,7 +496,7 @@ export default function PosPage() {
             </span>
           </div>
           <div className="flex items-center gap-1.5 text-xs font-bold font-mono">
-            <span>${total.toFixed(2)}</span>
+            <span> ETB {total.toFixed(2)}</span>
             <ArrowRight className="w-4 h-4" />
           </div>
         </button>

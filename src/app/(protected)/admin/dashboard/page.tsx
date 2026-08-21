@@ -87,12 +87,11 @@ export default function AdminDashboardPage() {
               <DollarSign className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-bold text-foreground font-mono">
-            ${performance.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+          <div className="text-2xl font-bold text-foreground font-mono"> ETB {performance.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
           </div>
           <div className="flex items-center gap-1 text-[11px] text-emerald-500 font-semibold">
             <TrendingUp className="w-3.5 h-3.5" />
-            <span>${performance.grossProfit.toFixed(2)} Profit ({performance.grossMarginPercentage.toFixed(1)}% margin)</span>
+            <span> ETB {performance.grossProfit.toFixed(2)} Profit ({performance.grossMarginPercentage.toFixed(1)}% margin)</span>
           </div>
         </div>
 
@@ -104,11 +103,10 @@ export default function AdminDashboardPage() {
               <Boxes className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-2xl font-bold text-foreground font-mono">
-            ${performance.currentStockValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+          <div className="text-2xl font-bold text-foreground font-mono"> ETB {performance.currentStockValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
           </div>
           <div className="text-[11px] text-muted-foreground">
-            Potential Retail: <span className="text-foreground font-medium">${performance.potentialRevenue.toLocaleString()}</span>
+            Potential Retail: <span className="text-foreground font-medium"> ETB {performance.potentialRevenue.toLocaleString()}</span>
           </div>
         </div>
 
