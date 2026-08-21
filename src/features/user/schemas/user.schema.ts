@@ -16,6 +16,8 @@ export const UpdateUserSchema = z.object({
     .min(3, "The minimum username length is 3 characters")
     .optional(),
   passowrd: z.string().optional(),
+  roleIds: z.array(z.string()).optional(),
+  isActive: z.boolean().optional(),
 });
 
 export type UpdateUserInput = z.infer<typeof UpdateUserSchema>;

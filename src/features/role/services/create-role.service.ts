@@ -28,7 +28,7 @@ export async function CreateRole(
       data: {
         type: "CREATED_ROLE",
         severity: "INFO",
-        message: `User: ${userName} created role ${newRole.name}`,
+        message: `User: ${userId} created role ${name}`,
         userId,
       },
     });

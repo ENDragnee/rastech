@@ -3,6 +3,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "@/lib/axios";
 
+export interface RoleReference {
+  id: string;
+  name: string;
+}
+
 export interface UserAccountItem {
   id: string;
   name?: string | null;
@@ -10,7 +15,7 @@ export interface UserAccountItem {
   isActive: boolean;
   createdAt: string;
   updatedAt?: string;
-  roles?: { id: string; name: string }[];
+  roles?: RoleReference[];
 }
 
 export interface FetchUsersParams {
@@ -55,7 +60,19 @@ export function useUsers(params: FetchUsersParams = {}) {
   });
 }
 
-// 2. Create User Mutation (sends `passowrd` matching your schema)
+// 2. Fetch Available Roles Helper
+export function useAvailableRoles() {
+  return useQuery<RoleReference[]>({
+    queryKey: ["available-roles-list"],
+    queryFn: async () => {
+      const res = await axiosInstance.get("/api/v1/role?limit=50");
+      return res.data.data || res.data;
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+// 3. Create User Mutation
 export function useCreateUser() {
   const queryClient = useQueryClient();
 
@@ -64,6 +81,7 @@ export function useCreateUser() {
       name?: string | null;
       userName: string;
       passowrd: string;
+      roleIds?: string[];
       isActive?: boolean;
     }) => {
       const res = await axiosInstance.post("/api/v1/user", payload);
@@ -75,7 +93,7 @@ export function useCreateUser() {
   });
 }
 
-// 3. Update User Mutation
+// 4. Update User Mutation (Includes roleIds & isActive)
 export function useUpdateUser() {
   const queryClient = useQueryClient();
 
@@ -88,17 +106,20 @@ export function useUpdateUser() {
       name?: string;
       userName?: string;
       passowrd?: string;
+      roleIds?: string[];
+      isActive?: boolean;
     }) => {
       const res = await axiosInstance.patch(`/api/v1/user/${id}`, payload);
       return res.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["roles"] });
     },
   });
 }
 
-// 4. Deactivate User Mutation (calls DELETE /api/v1/user/[id] for soft delete)
+// 5. Deactivate User Mutation
 export function useDeactivateUser() {
   const queryClient = useQueryClient();
 

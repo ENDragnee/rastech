@@ -25,7 +25,7 @@ export async function UpdateRole(
       data: {
         type: "UPDATED_ROLE",
         severity: "INFO",
-        message: `User: ${userName} updated role ${id}`,
+        message: `User: ${userId} updated role ${id}`,
         userId,
       },
     });

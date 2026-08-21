@@ -15,7 +15,12 @@ export const POST = CreateApiRoute({
     status: true,
     permission: "CREATE_ROLE",
   },
-  handler: async (body: CreateRoleInput, session: any, logger: any) => {
+  handler: async (
+    body: CreateRoleInput,
+    session: any,
+    params: any,
+    logger: any,
+  ) => {
     return await CreateRole(body, session, logger);
   },
 });

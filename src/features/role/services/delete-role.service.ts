@@ -26,7 +26,7 @@ export async function DeleteRole(
       data: {
         type: "DELETED_ROLE",
         severity: "WARNING",
-        message: `User: ${userName} deleted role ${role.name}`,
+        message: `User: ${userId} deleted role ${id}`,
         userId,
       },
     });

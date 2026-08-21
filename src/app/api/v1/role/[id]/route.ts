@@ -31,6 +31,7 @@ export const DELETE = CreateApiRoute({
     permission: "DELETE_ROLE",
   },
   handler: async (
+    body: any,
     session: any,
     params: DynamicApiRouteInput | undefined,
     logger: any,
