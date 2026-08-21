@@ -28,7 +28,7 @@ export const DELETE = CreateApiRoute({
   moduleName: "DeleteCategoryAPI",
   requiresAuth: {
     status: true,
-    permission: "DELTE_CATEGORY",
+    permission: "DELETE_CATEGORY",
   },
   handler: async (
     session: any,

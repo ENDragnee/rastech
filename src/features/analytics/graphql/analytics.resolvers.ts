@@ -1,13 +1,13 @@
-import { CreateGraphqlRoute } from "@/lib/api-handlers/graphql.handler";
 import { GetDashboardAnalytics } from "../services/analytics.service";
+import { CreateGraphqlRoute } from "@/lib/api-handlers/graphql.handler";
 
 export const analyticsResolvers = {
   Query: {
     getDashboardAnalytics: CreateGraphqlRoute({
-      moduleName: "DashboardAnalytics",
+      moduleName: "GetDashboardAnalyticsResolver",
       requiresAuth: {
         status: true,
-        permission: "VIEW_ANALYTICS", // Ensure this permission exists in your DB or change it as needed
+        permission: "VIEW_ANALYTICS",
       },
       handler: async () => {
         return await GetDashboardAnalytics();

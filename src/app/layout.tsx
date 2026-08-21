@@ -38,6 +38,8 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await GetApiSession()
+  console.log(session)
   return (
     <html
       lang="en"
