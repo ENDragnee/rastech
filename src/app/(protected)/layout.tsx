@@ -5,12 +5,7 @@ import { redirect } from "next/navigation";
 export default async function Layout({ children }: { children: React.ReactNode }) {
   const { user } = await GetSession();
   if (!user) {
-    redirect("/auth/signin")
+    redirect("/unauthorized")
   }
-  const role = user.role[0]
-  const parsedUser = {
-    ...user,
-    role
-  }
-  return <DashboardLayout user={parsedUser}>{children}</DashboardLayout>;
+  return <DashboardLayout user={user}>{children}</DashboardLayout>;
 }
