@@ -1,6 +1,6 @@
 import React from "react";
 import { Box } from "lucide-react";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { ThemeDropdown } from "@/components/ui/theme-toggle";
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -21,7 +21,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
             Rastech
           </span>
         </div>
-        <ThemeToggle />
+        <ThemeDropdown />
       </header>
 
       {/* Center Auth Card */}

@@ -37,6 +37,9 @@ export const rolesData: RoleSeed[] = [
       "UPATE_CATEGORY",
       "DELETE_CATEGORY",
       "FETCH_TRANSACTION",
+      "CREATE_TRANSACTION",
+      "PROCESS_RETURN",
+      "PROCESS_SALE",
     ],
   },
   {

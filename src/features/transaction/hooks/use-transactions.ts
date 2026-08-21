@@ -52,7 +52,35 @@ export function useTransactions(search: string = "", page: number = 1) {
   });
 }
 
-// 1. Hook for Multi-Item Cart POS Checkout
+// 1. General Transaction Creation / Adjustment Hook (Used by Manager & General mutations)
+export function useCreateTransaction() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payload: {
+      type: "SOLD" | "PURCHASED" | "RETURNED" | "DEFECTIVE" | "ADJUSTMENT_LOSS";
+      stockId: string;
+      quantity: number;
+      price: number;
+      paymentMethod?: "CASH" | "CARD" | "TRANSFER" | "ADJUSTMENT_LOSS";
+      customerName?: string;
+      customerPhone?: string;
+      originalTransactionId?: string;
+      reason?: string;
+    }) => {
+      const response = await axiosInstance.post("/api/v1/transaction", payload);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["stocks"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-analytics"] });
+    },
+  });
+}
+
+// 2. POS Multi-Item Cart Checkout Hook
 export function useCheckoutSale() {
   const queryClient = useQueryClient();
 
@@ -60,24 +88,25 @@ export function useCheckoutSale() {
     mutationFn: async (payload: {
       items: { stockId: string; quantity: number; price: number }[];
       paymentMethod: "CASH" | "CARD" | "TRANSFER";
-      customerName: string;
-      customerPhone: string;
+      customerName?: string;
+      customerPhone?: string;
     }) => {
       const response = await axiosInstance.post(
         "/api/v1/transaction/sale",
         payload,
       );
-      return response.data; // Returns { invoiceNumber, transactions }
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["stocks"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-analytics"] });
     },
   });
 }
 
-// 2. Hook for Return & Warranty Claims
+// 3. Customer Return Hook
 export function useProcessReturn() {
   const queryClient = useQueryClient();
 
@@ -98,6 +127,7 @@ export function useProcessReturn() {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["stocks"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-analytics"] });
     },
   });
 }

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { GetApiSession } from "@/lib/session";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { ThemeDropdown } from "@/components/ui/theme-toggle";
 import {
   Box,
   ArrowRight,
@@ -37,7 +37,7 @@ export default async function LandingPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <ThemeToggle />
+            <ThemeDropdown />
             {session ? (
               <Link href={dashboardHref}>
                 <Button size="sm" className="h-8 gap-1.5 text-xs font-medium">
