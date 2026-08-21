@@ -2,7 +2,7 @@ export interface UserSeed {
   name: string;
   userName: string;
   passwordRaw: string;
-  roleName: "ADMIN" | "MANAGER" | "CASHIER";
+  roleNames: ("ADMIN" | "MANAGER" | "CASHIER")[];
 }
 
 export const usersData: UserSeed[] = [
@@ -10,24 +10,24 @@ export const usersData: UserSeed[] = [
     name: "System Administrator",
     userName: "admin",
     passwordRaw: "Admin123!",
-    roleName: "ADMIN",
+    roleNames: ["ADMIN", "MANAGER"],
   },
   {
     name: "Inventory Manager",
     userName: "manager",
     passwordRaw: "Manager123!",
-    roleName: "MANAGER",
+    roleNames: ["MANAGER"],
   },
   {
     name: "Main POS Cashier",
     userName: "cashier",
     passwordRaw: "Cashier123!",
-    roleName: "CASHIER",
+    roleNames: ["CASHIER"],
   },
   {
     name: "Secondary Cashier",
     userName: "cashier2",
     passwordRaw: "Cashier123!",
-    roleName: "CASHIER",
+    roleNames: ["CASHIER"],
   },
 ];

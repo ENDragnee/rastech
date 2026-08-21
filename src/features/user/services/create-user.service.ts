@@ -28,7 +28,7 @@ export async function CreateUser(
         data: {
           type: "USER_CREATE",
           severity: "INFO",
-          message: `User ${session.userName} has created a user: ${createUser.userName}`,
+          message: `User ${session.id} has created a user`,
           userId: userId,
         },
       });

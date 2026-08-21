@@ -12,7 +12,7 @@ export const PATCH = CreateApiRoute({
   schema: UpdateCategorySchema,
   requiresAuth: {
     status: true,
-    permission: "UPATE_CATEGORY",
+    permission: "UPDATE_CATEGORY",
   },
   handler: async (
     body: UpdateCategoryInput,

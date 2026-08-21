@@ -76,16 +76,26 @@ async function main() {
     createdRoles.set(role.name, created.id);
   }
 
-  // 5. Seed Users & Assign Roles + Direct Permissions
-  console.log("👤 Seeding staff users...");
+  // 5. Seed Users with Multiple Roles and Aggregated Permissions
+  console.log("👤 Seeding multi-role staff users...");
   const createdUsers = new Map<string, string>();
   for (const u of usersData) {
-    // Hash password with your helper or fallback
     const password = await HashPassword(u.passwordRaw);
 
-    const roleId = createdRoles.get(u.roleName);
-    const roleDef = rolesData.find((r) => r.name === u.roleName);
-    const userPermissions = (roleDef?.permissions || [])
+    // Map role IDs
+    const roleConnect = u.roleNames
+      .map((rName) => createdRoles.get(rName))
+      .filter(Boolean)
+      .map((id) => ({ id: id as string }));
+
+    // Aggregate unique permissions across all assigned roles
+    const allRolePermNames = new Set<string>();
+    for (const rName of u.roleNames) {
+      const roleDef = rolesData.find((r) => r.name === rName);
+      roleDef?.permissions.forEach((p) => allRolePermNames.add(p));
+    }
+
+    const permissionConnect = Array.from(allRolePermNames)
       .map((pName) => createdPermissions.get(pName))
       .filter(Boolean)
       .map((id) => ({ id: id as string }));
@@ -96,8 +106,8 @@ async function main() {
         userName: u.userName,
         password,
         isActive: true,
-        roles: roleId ? { connect: [{ id: roleId }] } : undefined,
-        permissions: { connect: userPermissions },
+        roles: { connect: roleConnect },
+        permissions: { connect: permissionConnect },
       },
     });
     createdUsers.set(u.userName, created.id);
@@ -117,7 +127,7 @@ async function main() {
   }
 
   // 7. Seed Products & Stocks
-  console.log("💻 Seeding products, serialized hardware & batch stocks...");
+  console.log("💻 Seeding products & stocks...");
   const createdStockIds: string[] = [];
 
   for (const prod of productsData) {
@@ -130,6 +140,7 @@ async function main() {
         sku: prod.sku,
         description: prod.description,
         warrantyDays: prod.warrantyDays,
+        withVat: true,
         categoryId,
       },
     });
@@ -150,12 +161,11 @@ async function main() {
     }
   }
 
-  // 8. Seed Sample Transactions (for testing Cashier / POS history & Returns)
-  console.log("🧾 Seeding initial sample transactions...");
+  // 8. Seed Sample Transactions
+  console.log("🧾 Seeding initial transactions...");
   const cashierId = createdUsers.get("cashier");
 
   if (cashierId && createdStockIds.length > 0) {
-    // 1. Completed sale with Serial Number
     await prisma.transaction.create({
       data: {
         invoiceNumber: "INV-2026-0001",
@@ -170,72 +180,28 @@ async function main() {
         userId: cashierId,
       },
     });
-
-    // 2. Completed sale with Accessories (Cash)
-    if (createdStockIds.length > 3) {
-      await prisma.transaction.create({
-        data: {
-          invoiceNumber: "INV-2026-0002",
-          type: "SOLD",
-          quantity: 2,
-          price: 199.98,
-          paymentMethod: "CASH",
-          customerName: "Sara Tesfaye",
-          customerPhone: "+251922334455",
-          warrantyEndsAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-          stockId: createdStockIds[createdStockIds.length - 2],
-          userId: cashierId,
-        },
-      });
-    }
-
-    // 3. Returned item example for testing returns flow
-    if (createdStockIds.length > 2) {
-      await prisma.transaction.create({
-        data: {
-          invoiceNumber: "INV-2026-0003-RET",
-          type: "RETURNED",
-          quantity: 1,
-          price: 65.0,
-          paymentMethod: "CASH",
-          customerName: "Dawit Alemu",
-          customerPhone: "+251933445566",
-          stockId: createdStockIds[2],
-          userId: cashierId,
-        },
-      });
-    }
   }
 
-  // 9. Seed Initial Audit Logs
-  console.log("📜 Seeding audit logs...");
+  // 9. Seed Logs
   const adminId = createdUsers.get("admin");
   if (adminId) {
-    await prisma.log.createMany({
-      data: [
-        {
-          type: "SYSTEM_INITIALIZED",
-          severity: "INFO",
-          message:
-            "Rastech Inventory Database initialized and seeded successfully.",
-          userId: adminId,
-        },
-        {
-          type: "STOCK_EDITED",
-          severity: "INFO",
-          message: "Initial stock intake for 2026 Q1 added to warehouse.",
-          userId: adminId,
-        },
-      ],
+    await prisma.log.create({
+      data: {
+        type: "SYSTEM_INITIALIZED",
+        severity: "INFO",
+        message:
+          "Rastech Inventory Database initialized with multi-role support.",
+        userId: adminId,
+      },
     });
   }
 
   console.log("\n\x1b[32m%s\x1b[0m", "✨ Database seeded successfully!");
-  console.log("\n────────────────────────────────────────────");
+  console.log("────────────────────────────────────────────");
   console.log("🔑 Default Test Accounts:");
-  console.log("  • ADMIN   : username: admin    | password: Admin123!");
-  console.log("  • MANAGER : username: manager  | password: Manager123!");
-  console.log("  • CASHIER : username: cashier  | password: Cashier123!");
+  console.log("  • ADMIN   : admin    | Admin123!   (Roles: ADMIN, MANAGER)");
+  console.log("  • MANAGER : manager  | Manager123! (Roles: MANAGER)");
+  console.log("  • CASHIER : cashier  | Cashier123! (Roles: CASHIER)");
   console.log("────────────────────────────────────────────\n");
 }
 

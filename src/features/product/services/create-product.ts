@@ -32,7 +32,7 @@ export async function CreateProduct(
           categoryId,
           sku,
           warrantyDays: warrantyDays ?? 0,
-          withVat: withVat ?? true, // <-- Persists withVat directly to Product table
+          withVat: withVat ?? true,
         },
       });
 

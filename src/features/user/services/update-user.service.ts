@@ -36,7 +36,7 @@ export async function UpdateUser(
         data: {
           type: "USER_UPDATED",
           severity: "INFO",
-          message: `User ${session.userName} has updated user: ${user.userName}.`,
+          message: `User ${session.userName} has updated user`,
           userId: session.id,
         },
       });
@@ -49,16 +49,9 @@ export async function UpdateUser(
         },
       });
     });
-    // const user = await prisma.user.update({
-    //   where: { id: userId },
-    //   data: {
-    //     ...(name && { name }),
-    //     ...(userName && { userName }),
-    //     ...(passowrd && { password: hashedPassword }),
-    //   },
-    // });
 
     logger.info({ userId }, "User has been deleted successfully");
+    return user;
   } catch (err: any) {
     if (err.code === "P2002") {
       logger?.warn(

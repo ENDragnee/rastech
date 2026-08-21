@@ -9,7 +9,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       redirect("/unauthorized");
     }
   } catch (error) {
-    redirect("/auth/signin");
+    redirect("/unauthorized");
   }
 
   return <>{children}</>;

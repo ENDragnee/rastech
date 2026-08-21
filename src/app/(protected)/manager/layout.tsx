@@ -9,7 +9,7 @@ export default async function ManagerLayout({ children }: { children: React.Reac
       redirect("/unauthorized");
     }
   } catch (error) {
-    redirect("/auth/signin");
+    redirect("/unauthorized");
   }
 
   return <>{children}</>;

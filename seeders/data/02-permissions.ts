@@ -26,8 +26,8 @@ export const permissionsData: PermissionSeed[] = [
   // Categories
   { name: "FETCH_CATEGORIES", guardName: "web", moduleSlug: "categories" },
   { name: "CREATE_CATEGORY", guardName: "web", moduleSlug: "categories" },
-  { name: "UPATE_CATEGORY", guardName: "web", moduleSlug: "categories" },
-  { name: "DELTE_CATEGORY", guardName: "web", moduleSlug: "categories" },
+  { name: "UPDATE_CATEGORY", guardName: "web", moduleSlug: "categories" },
+  { name: "DELETE_CATEGORY", guardName: "web", moduleSlug: "categories" },
 
   // Reports & Analytics
   { name: "FETCH_REPORTS", guardName: "web", moduleSlug: "reports" },

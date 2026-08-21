@@ -1,151 +1,265 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Shield, ShieldCheck, MoreHorizontal, UserCheck, UserX } from "lucide-react";
+import {
+  useUsers,
+  type UserAccountItem,
+} from "@/features/user/hooks/use-users";
+import {
+  Search,
+  Users,
+  PlusCircle,
+  Edit2,
+  UserX,
+  Loader2,
+  CheckCircle2,
+  XCircle,
+  ChevronLeft,
+  ChevronRight,
+  Calendar,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { UserFormDialog } from "@/features/user/components/user-form-dialog";
+import { DeactivateUserDialog } from "@/features/user/components/deactivate-user-dialog";
 
-const MOCK_USERS = [
-  { id: "1", name: "John Doe", username: "admin_john", role: "ADMIN", active: true },
-  { id: "2", name: "Jane Smith", username: "mgr_jane", role: "MANAGER", active: true },
-  { id: "3", name: "Bob Wilson", username: "cashier_bob", role: "CASHIER", active: true },
-  { id: "4", name: "Alice Brown", username: "cashier_alice", role: "CASHIER", active: false },
-];
+export default function AdminUsersPage() {
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"ACTIVE" | "INACTIVE">("ACTIVE");
+  const [page, setPage] = useState(1);
 
-export default function UsersPage() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  // Dialog states
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<UserAccountItem | null>(null);
+  const [deactivatingUser, setDeactivatingUser] = useState<UserAccountItem | null>(null);
+
+  const { data, isLoading } = useUsers({
+    search,
+    status: statusFilter,
+    page,
+    limit: 10,
+  });
+
+  const users = data?.data || [];
+  const meta = data?.meta || { totalPages: 1, total: 0, page: 1 };
+
+  const handleOpenCreate = () => {
+    setEditingUser(null);
+    setIsFormOpen(true);
+  };
+
+  const handleOpenEdit = (user: UserAccountItem) => {
+    setEditingUser(user);
+    setIsFormOpen(true);
+  };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 max-w-6xl mx-auto">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="space-y-4 sm:space-y-5 animate-in fade-in duration-300">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Staff & Roles</h1>
-          <p className="text-muted-foreground mt-1">Manage system access, roles, and employee accounts.</p>
+          <h1 className="text-lg sm:text-xl font-bold tracking-tight text-foreground">
+            Staff &amp; User Administration
+          </h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Manage user credentials, grant operational access, and deactivate inactive staff accounts.
+          </p>
         </div>
-        <button 
-          onClick={() => setIsModalOpen(true)}
-          className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 transition-colors"
+
+        <Button
+          size="sm"
+          onClick={handleOpenCreate}
+          className="text-xs gap-1.5 bg-primary text-primary-foreground font-semibold shadow-sm w-full sm:w-auto h-9"
         >
-          <Plus className="mr-2 h-4 w-4" /> Add User
-        </button>
+          <PlusCircle className="w-3.5 h-3.5" />
+          Add Staff Account
+        </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Roles Summary */}
-        <div className="col-span-1 space-y-4">
-          <h2 className="text-lg font-bold text-foreground mb-2">Available Roles</h2>
-          
-          <div className="p-4 rounded-xl border border-primary/20 bg-primary/5 flex flex-col">
-            <div className="flex items-center gap-2 mb-2">
-              <ShieldCheck className="h-5 w-5 text-primary" />
-              <h3 className="font-bold text-primary">ADMIN</h3>
-            </div>
-            <p className="text-sm text-muted-foreground">Full system access. Can manage users, edit catalog, and view all reports.</p>
+      {/* Filter & Search Bar Strip */}
+      <div className="space-y-3 bg-card p-3 sm:p-4 rounded-2xl border border-border shadow-sm">
+        <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-3">
+          {/* Status Tabs */}
+          <div className="flex gap-1.5 text-xs">
+            <button
+              type="button"
+              onClick={() => {
+                setStatusFilter("ACTIVE");
+                setPage(1);
+              }}
+              className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${statusFilter === "ACTIVE"
+                  ? "bg-foreground text-background font-semibold"
+                  : "bg-muted/60 text-muted-foreground hover:text-foreground"
+                }`}
+            >
+              Active Staff Accounts
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setStatusFilter("INACTIVE");
+                setPage(1);
+              }}
+              className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${statusFilter === "INACTIVE"
+                  ? "bg-destructive/15 text-destructive font-semibold border border-destructive/30"
+                  : "bg-muted/60 text-muted-foreground hover:text-foreground"
+                }`}
+            >
+              Deactivated Accounts
+            </button>
           </div>
-          
-          <div className="p-4 rounded-xl border border-border bg-card flex flex-col">
-            <div className="flex items-center gap-2 mb-2">
-              <Shield className="h-5 w-5 text-emerald-500" />
-              <h3 className="font-bold text-emerald-500">MANAGER</h3>
-            </div>
-            <p className="text-sm text-muted-foreground">Can view analytics, generate reports, and manage stock levels.</p>
-          </div>
-          
-          <div className="p-4 rounded-xl border border-border bg-card flex flex-col">
-            <div className="flex items-center gap-2 mb-2">
-              <Shield className="h-5 w-5 text-muted-foreground" />
-              <h3 className="font-bold text-foreground">CASHIER</h3>
-            </div>
-            <p className="text-sm text-muted-foreground">Restricted to Point of Sale, processing transactions, and returns.</p>
+
+          {/* Search Bar */}
+          <div className="w-full lg:w-80 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search by username (min 2 chars)..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+              className="pl-9 h-9 text-xs bg-background"
+            />
           </div>
         </div>
+      </div>
 
-        {/* Users Table */}
-        <div className="col-span-1 md:col-span-2 rounded-xl border border-border bg-card shadow-sm overflow-hidden flex flex-col">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead className="text-xs text-muted-foreground bg-muted/50 uppercase border-b border-border">
+      {/* Responsive Table Container */}
+      <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs text-left min-w-[650px]">
+            <thead className="border-b border-border bg-muted/40 text-muted-foreground uppercase text-[10px] tracking-wider font-semibold">
+              <tr>
+                <th className="p-3.5">User Handle</th>
+                <th className="p-3.5">Full Name</th>
+                <th className="p-3.5">Account Status</th>
+                <th className="p-3.5">Registered Date</th>
+                <th className="p-3.5 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {isLoading ? (
                 <tr>
-                  <th className="px-6 py-4 font-medium">User</th>
-                  <th className="px-6 py-4 font-medium">Role</th>
-                  <th className="px-6 py-4 font-medium">Status</th>
-                  <th className="px-6 py-4 font-medium text-right">Actions</th>
+                  <td colSpan={5} className="p-10 text-center text-muted-foreground">
+                    <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-primary" />
+                    Loading staff accounts...
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {MOCK_USERS.map((user) => (
-                  <tr key={user.id} className="bg-background hover:bg-muted/30 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="font-semibold text-foreground">{user.name}</div>
-                      <div className="text-xs text-muted-foreground font-mono mt-0.5">@{user.username}</div>
+              ) : users.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="p-10 text-center text-muted-foreground">
+                    <Users className="w-8 h-8 mx-auto mb-2 opacity-20" />
+                    No {statusFilter.toLowerCase()} accounts found.
+                  </td>
+                </tr>
+              ) : (
+                users.map((u) => (
+                  <tr key={u.id} className="hover:bg-muted/30 transition-colors">
+                    {/* Username */}
+                    <td className="p-3.5 font-mono font-semibold text-foreground whitespace-nowrap">
+                      @{u.userName}
                     </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-bold tracking-wider ${
-                        user.role === "ADMIN" ? "border-primary text-primary bg-primary/10" :
-                        user.role === "MANAGER" ? "border-emerald-500 text-emerald-500 bg-emerald-500/10" :
-                        "border-border text-foreground bg-muted"
-                      }`}>
-                        {user.role}
-                      </span>
+
+                    {/* Full Name */}
+                    <td className="p-3.5 font-medium text-foreground whitespace-nowrap">
+                      {u.name || "—"}
                     </td>
-                    <td className="px-6 py-4">
-                      {user.active ? (
-                        <span className="flex items-center gap-1.5 text-emerald-500 font-medium text-xs">
-                          <UserCheck className="h-4 w-4" /> Active
+
+                    {/* Status Badge */}
+                    <td className="p-3.5 whitespace-nowrap">
+                      {u.isActive ? (
+                        <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                          <CheckCircle2 className="w-3 h-3" /> Active
                         </span>
                       ) : (
-                        <span className="flex items-center gap-1.5 text-destructive font-medium text-xs">
-                          <UserX className="h-4 w-4" /> Inactive
+                        <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-destructive bg-destructive/10 border border-destructive/20 px-2 py-0.5 rounded-full">
+                          <XCircle className="w-3 h-3" /> Deactivated
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <button className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-muted">
-                        <MoreHorizontal className="h-5 w-5" />
-                      </button>
+
+                    {/* Created Date */}
+                    <td className="p-3.5 text-muted-foreground whitespace-nowrap">
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5 text-muted-foreground/60" />
+                        <span>{new Date(u.createdAt).toLocaleDateString()}</span>
+                      </div>
+                    </td>
+
+                    {/* Actions */}
+                    <td className="p-3.5 text-right whitespace-nowrap space-x-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleOpenEdit(u)}
+                        className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                        title="Edit User Details"
+                      >
+                        <Edit2 className="w-3.5 h-3.5 mr-1" /> Edit
+                      </Button>
+
+                      {u.isActive && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setDeactivatingUser(u)}
+                          className="h-7 px-2 text-xs text-destructive hover:bg-destructive/10"
+                          title="Deactivate User (Soft Delete)"
+                        >
+                          <UserX className="w-3.5 h-3.5 mr-1" /> Deactivate
+                        </Button>
+                      )}
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination Bar */}
+        <div className="p-3 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground bg-muted/20">
+          <span>
+            Showing Page {meta.page || 1} of {meta.totalPages || 1} ({meta.total || 0} users)
+          </span>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              className="h-7 px-2 text-xs"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" /> Prev
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= meta.totalPages}
+              onClick={() => setPage((p) => p + 1)}
+              className="h-7 px-2 text-xs"
+            >
+              Next <ChevronRight className="w-3.5 h-3.5" />
+            </Button>
           </div>
         </div>
       </div>
 
-      {/* Add User Modal Placeholder */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-card rounded-2xl border border-border shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="p-6 border-b border-border">
-              <h2 className="text-xl font-bold text-foreground">Add New User</h2>
-            </div>
-            <div className="p-6 space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-foreground">Full Name</label>
-                <input type="text" className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm focus:ring-1 focus:ring-primary outline-none" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-foreground">Username</label>
-                <input type="text" className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm focus:ring-1 focus:ring-primary outline-none" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-foreground">Assign Role</label>
-                <select className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm focus:ring-1 focus:ring-primary outline-none text-foreground">
-                  <option>ADMIN</option>
-                  <option>MANAGER</option>
-                  <option>CASHIER</option>
-                </select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-foreground">Temporary Password</label>
-                <input type="password" placeholder="••••••••" className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm focus:ring-1 focus:ring-primary outline-none" />
-              </div>
-            </div>
-            <div className="p-4 border-t border-border bg-muted/30 flex justify-end gap-3">
-              <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 rounded-md font-medium text-sm text-muted-foreground hover:bg-muted">Cancel</button>
-              <button onClick={() => setIsModalOpen(false)} className="px-6 py-2 rounded-md font-medium text-sm bg-primary text-primary-foreground hover:bg-primary/90">Save User</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Modals */}
+      <UserFormDialog
+        isOpen={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
+        user={editingUser}
+      />
+
+      <DeactivateUserDialog
+        isOpen={!!deactivatingUser}
+        onClose={() => setDeactivatingUser(null)}
+        user={deactivatingUser}
+      />
     </div>
   );
 }

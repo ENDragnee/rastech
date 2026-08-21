@@ -30,7 +30,12 @@ export const DELETE = CreateApiRoute({
     status: true,
     permission: "DELETE_USER",
   },
-  handler: async (session: any, params, logger: any) => {
+  handler: async (
+    body: any,
+    session: any,
+    params: DynamicApiRouteInput | undefined,
+    logger: any,
+  ) => {
     return await DeleteUser(session, params, logger);
   },
 });
