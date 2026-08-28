@@ -6,6 +6,7 @@ import { rolesData } from "./data/03-roles";
 import { usersData } from "./data/04-users";
 import { categoriesData } from "./data/05-categories";
 import { productsData } from "./data/06-products";
+import { banksData } from "./data/07-banks";
 import { prisma } from "../src/lib/prisma";
 
 async function main() {
@@ -192,6 +193,17 @@ async function main() {
         message:
           "Rastech Inventory Database initialized with multi-role support.",
         userId: adminId,
+      },
+    });
+  }
+
+  console.log("🏦 Seeding commercial banks...");
+  await prisma.bank.deleteMany();
+  for (const b of banksData) {
+    await prisma.bank.create({
+      data: {
+        name: b.name,
+        accountNumber: b.accountNumber,
       },
     });
   }

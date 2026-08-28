@@ -10,7 +10,7 @@ export async function ProcessSaleCheckout(
   logger?: Logger,
 ) {
   const { id: userId, userName, role } = session;
-  const { items, paymentMethod, customerName, customerPhone } = body;
+  const { items, paymentMethod, customerName, customerPhone, bankId } = body;
 
   const userRoles = Array.isArray(role) ? role : [role || "STAFF"];
   const isManagerOrAdmin =
@@ -77,6 +77,10 @@ export async function ProcessSaleCheckout(
           quantity: item.quantity,
           price: item.price,
           paymentMethod: paymentMethod || "CASH",
+          bankId:
+            paymentMethod === "TRANSFER" || paymentMethod === "CARD"
+              ? body.bankId
+              : null,
           customerName: safeCustomerName,
           customerPhone: safeCustomerPhone,
           warrantyEndsAt,

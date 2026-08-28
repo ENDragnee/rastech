@@ -14,4 +14,6 @@ export const modulesData: ModuleSeed[] = [
   { name: "User Management", slug: "users", isActive: true },
   { name: "Role Management", slug: "roles", isActive: true },
   { name: "Audit Logs", slug: "logs", isActive: true },
+  { name: "Credit Management", slug: "credits", isActive: true },
+  { name: "Bank Management", slug: "banks", isActive: true },
 ];

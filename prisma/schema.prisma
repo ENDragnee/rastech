@@ -19,9 +19,11 @@ model User {
   password String
   isActive Boolean @default(true)
 
-  sessions     Session[]
-  logs         Log[]
-  transactions Transaction[]
+  sessions        Session[]
+  logs            Log[]
+  transactions    Transaction[]
+  creditsCreated  Credit[]      @relation("CreditCreatedBy")
+  creditsApproved Credit[]      @relation("CreditApprovedBy")
 
   roles       Role[]
   permissions Permission[]
@@ -147,6 +149,7 @@ model Stock {
   productId String
   products  Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
   history   Transaction[]
+  credit    Credit[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -162,16 +165,20 @@ model Transaction {
   price         Float
 
   paymentMethod PaymentMethod?
+  bankId        String?
+  bank          Bank?          @relation(fields: [bankId], references: [id])
   customerName  String?
   customerPhone String?
 
   warrantyEndsAt DateTime?
 
   stockId String
-  stocks  Stock  @relation(fields: [stockId], references: [id], onDelete: Cascade)
+  stocks  Stock  @relation(fields: [stockId], references: [id], onDelete: Restrict)
 
   userId String?
   users  User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  credit Credit?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -192,6 +199,57 @@ enum PaymentMethod {
   CARD
   TRANSFER
   ADJUSTMENT_LOSS
+  CREDIT
+}
+
+model Bank {
+  id            String        @id @default(cuid())
+  name          String
+  accountNumber BigInt?
+  transactions  Transaction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([name])
+  @@map("banks")
+}
+
+model Credit {
+  id            String  @id @default(cuid())
+  customerName  String
+  customerPhone String?
+  customerIdDoc String?
+
+  quantity    Int
+  totalAmount Float
+  dueDate     DateTime?
+  status      CreditStatus @default(PENDING)
+
+  stockId String
+  stock   Stock  @relation(fields: [stockId], references: [id], onDelete: Restrict)
+
+  transactionId String      @unique
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Restrict)
+
+  createdById String?
+  createdBy   User?   @relation("CreditCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  approvedById String?
+  approvedBy   User?   @relation("CreditApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([customerName, customerPhone])
+  @@map("credits")
+}
+
+enum CreditStatus {
+  PENDING
+  RETURNED
+  PAID
+  DEFAULTED
 }
 
 model Log {

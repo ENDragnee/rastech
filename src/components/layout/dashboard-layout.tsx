@@ -25,6 +25,8 @@ import {
   BookOpen,
   SunMoon,
   ExternalLink,
+  Handshake,
+  Building2,
   ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -37,7 +39,6 @@ interface NavItem {
   href: string;
   icon: React.ElementType;
   show: boolean;
-  badge?: string;
 }
 
 interface NavSection {
@@ -83,7 +84,7 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
 
   // 2. Navigation Sections Matrix
   const navSections: NavSection[] = [
-    // GROUP 1: WORKSPACES (Shows all authorized dashboards)
+    // GROUP 1: WORKSPACES
     {
       label: "Workspaces",
       items: [
@@ -108,7 +109,7 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
       ],
     },
 
-    // GROUP 2: POINT OF SALE & REGISTRY
+    // GROUP 2: SALES & POS
     {
       label: "Sales & POS",
       items: [
@@ -119,7 +120,7 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
           show: hasPerm("PROCESS_SALE") || hasPerm("CREATE_TRANSACTION") || isCashier || isManager || isAdmin,
         },
         {
-          title: "Returns & Warranty Desk",
+          title: "Returns & Warranty",
           href: "/cashier/returns",
           icon: RotateCcw,
           show: hasPerm("PROCESS_RETURN") || hasPerm("CREATE_TRANSACTION") || isCashier || isManager || isAdmin,
@@ -129,6 +130,12 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
           href: isManager || isAdmin ? "/manager/transactions" : "/cashier/transactions",
           icon: Receipt,
           show: hasPerm("FETCH_TRANSACTION"),
+        },
+        {
+          title: "Credit Registry",
+          href: isManager || isAdmin ? "/manager/credits" : "/cashier/credits",
+          icon: Handshake,
+          show: hasPerm("FETCH_CREDIT") || isManager || isAdmin,
         },
       ],
     },
@@ -153,12 +160,18 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
           title: "Categories",
           href: "/admin/categories",
           icon: Tags,
-          show: isAdmin, // Strictly ADMIN only
+          show: isAdmin || hasPerm("CREATE_CATEGORY"),
+        },
+        {
+          title: "Bank Accounts",
+          href: "/admin/banks",
+          icon: Building2,
+          show: isAdmin || hasPerm("CREATE_BANK"),
         },
       ],
     },
 
-    // GROUP 4: EXECUTIVE REPORTS & FORMULAS (Manager & Admin)
+    // GROUP 4: EXECUTIVE REPORTS & ANALYTICS
     {
       label: "Executive Analytics",
       items: [
@@ -177,7 +190,7 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
       ],
     },
 
-    // GROUP 5: SYSTEM GOVERNANCE (Admin Exclusive)
+    // GROUP 5: SYSTEM GOVERNANCE (Admin)
     {
       label: "System Administration",
       items: [
@@ -188,7 +201,7 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
           show: isAdmin || hasPerm("FETCH_ALL_USERS"),
         },
         {
-          title: "Roles & Permissions (RBAC)",
+          title: "Roles & Access (RBAC)",
           href: "/admin/roles",
           icon: ShieldAlert,
           show: isAdmin || hasPerm("FETCH_ROLE"),
@@ -203,7 +216,7 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
     },
   ];
 
-  // Filter sections that have at least one authorized link
+  // Filter sections to only render authorized links
   const visibleSections = navSections
     .map((section) => ({
       ...section,
@@ -221,7 +234,9 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
         />
       )}
 
-      {/* Sidebar (Desktop & Mobile Drawer) */}
+      {/* ========================================================= */}
+      {/* DESKTOP & MOBILE SIDEBAR                                  */}
+      {/* ========================================================= */}
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-50 w-64 flex flex-col border-r border-border bg-card transition-transform duration-300 md:static md:translate-x-0",
@@ -253,7 +268,7 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
           </Button>
         </div>
 
-        {/* Dynamic Section-Grouped Nav */}
+        {/* Grouped Navigation Links */}
         <nav className="flex-1 space-y-4 p-3 overflow-y-auto">
           {visibleSections.map((section) => (
             <div key={section.label} className="space-y-1">
@@ -262,7 +277,7 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
               </div>
               <div className="space-y-0.5">
                 {section.items.map((item) => {
-                  const isActive = pathname === item.href;
+                  const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
                   const Icon = item.icon;
 
                   return (
@@ -288,7 +303,9 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
         </nav>
       </aside>
 
-      {/* Main Content Area */}
+      {/* ========================================================= */}
+      {/* MAIN CONTENT WRAPPER WITH TOP NAVBAR                      */}
+      {/* ========================================================= */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Navbar */}
         <header className="h-16 border-b border-border bg-background/80 backdrop-blur-sm flex items-center justify-between px-4 sm:px-6 sticky top-0 z-30">
@@ -310,12 +327,13 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
             </div>
           </div>
 
-          {/* Top Right Profile Button */}
+          {/* Top Right YouTube-Style Profile Trigger */}
           <div className="relative">
             <button
               type="button"
               onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-              className="flex items-center gap-2.5 p-1 rounded-full hover:ring-2 hover:ring-primary/40 transition-all"
+              className="flex items-center gap-2 p-1 rounded-full hover:ring-2 hover:ring-primary/40 transition-all"
+              title="Account & Settings"
             >
               <div className="relative flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-primary font-bold text-xs border border-primary/30 shadow-sm">
                 {initials}
@@ -325,7 +343,7 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
           </div>
         </header>
 
-        {/* User Flyout Menu */}
+        {/* Global YouTube-Style Profile Flyout Menu */}
         {isUserMenuOpen && (
           <>
             <div
@@ -458,7 +476,7 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
 
         {/* Dynamic Page Content with Integrated Footer */}
         <main className="flex-1 flex flex-col justify-between overflow-y-auto">
-          <div className="p-4 sm:p-6 flex-1">
+          <div className="p-4 sm:p-6 lg:p-8 flex-1">
             {children}
           </div>
           <Footer />

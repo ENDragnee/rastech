@@ -47,4 +47,14 @@ export const permissionsData: PermissionSeed[] = [
 
   // Logs
   { name: "FETCH_LOGS", guardName: "web", moduleSlug: "logs" },
+
+  { name: "FETCH_CREDIT", guardName: "web", moduleSlug: "credits" },
+  { name: "CREATE_CREDIT", guardName: "web", moduleSlug: "credits" },
+  { name: "UPDATE_CREDIT", guardName: "web", moduleSlug: "credits" },
+  { name: "DELETE_CREDIT", guardName: "web", moduleSlug: "credits" },
+
+  { name: "FETCH_BANK", guardName: "web", moduleSlug: "banks" },
+  { name: "CREATE_BANK", guardName: "web", moduleSlug: "banks" },
+  { name: "UPDATE_BANK", guardName: "web", moduleSlug: "banks" },
+  { name: "DELETE_BANK", guardName: "web", moduleSlug: "banks" },
 ];

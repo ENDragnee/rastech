@@ -7,7 +7,6 @@ import {
   Boxes,
   Barcode,
   PlusCircle,
-  ShieldCheck,
   CheckCircle2,
   XCircle,
   Loader2,
@@ -38,7 +37,6 @@ export default function ManagerStockPage() {
   const stocks = data?.data || [];
   const meta = data?.meta || { totalPages: 1, total: 0, page: 1 };
 
-  // Filter in memory for tab selection
   const filteredStocks = stocks.filter((stock) => {
     if (typeFilter === "SERIALIZED") return !!stock.serialNumber;
     if (typeFilter === "BATCH") return !stock.serialNumber;
@@ -46,7 +44,6 @@ export default function ManagerStockPage() {
     return true;
   });
 
-  // KPI Calculations
   const totalUnits = stocks.reduce((sum, s) => sum + s.quantity, 0);
   const totalCostValue = stocks.reduce((sum, s) => sum + s.quantity * s.costPrice, 0);
   const potentialRetailValue = stocks.reduce((sum, s) => sum + s.quantity * s.sellingPrice, 0);
@@ -63,7 +60,7 @@ export default function ManagerStockPage() {
 
   return (
     <div className="space-y-4 sm:space-y-5 animate-in fade-in duration-300">
-      {/* Top Header & Actions */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
           <h1 className="text-lg sm:text-xl font-bold tracking-tight text-foreground">
@@ -84,14 +81,15 @@ export default function ManagerStockPage() {
         </Button>
       </div>
 
-      {/* Real-time Inventory Asset Metric Cards */}
+      {/* Asset Valuation Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="p-3.5 sm:p-4 rounded-2xl border border-border bg-card shadow-sm space-y-1">
           <div className="flex items-center justify-between text-muted-foreground">
             <span className="text-xs font-medium">Warehouse Asset Value (Cost)</span>
             <DollarSign className="w-4 h-4 text-primary" />
           </div>
-          <div className="text-xl sm:text-2xl font-bold text-foreground font-mono"> ETB {totalCostValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+          <div className="text-xl sm:text-2xl font-bold text-foreground font-mono">
+            ETB {totalCostValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
           </div>
           <span className="text-[10px] text-muted-foreground block">Wholesale capital basis</span>
         </div>
@@ -101,7 +99,8 @@ export default function ManagerStockPage() {
             <span className="text-xs font-medium">Realizable Retail Potential</span>
             <TrendingUp className="w-4 h-4 text-emerald-500" />
           </div>
-          <div className="text-xl sm:text-2xl font-bold text-emerald-500 font-mono"> ETB {potentialRetailValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+          <div className="text-xl sm:text-2xl font-bold text-emerald-500 font-mono">
+            ETB {potentialRetailValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
           </div>
           <span className="text-[10px] text-muted-foreground block">Expected sales revenue</span>
         </div>
@@ -118,10 +117,9 @@ export default function ManagerStockPage() {
         </div>
       </div>
 
-      {/* Search & Filter Strip */}
+      {/* Filters */}
       <div className="space-y-3 bg-card p-3 sm:p-4 rounded-2xl border border-border shadow-sm">
         <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-3">
-          {/* Filter Pills */}
           <div className="flex gap-1.5 overflow-x-auto pb-1 max-w-full text-xs scrollbar-none">
             <button
               type="button"
@@ -177,7 +175,6 @@ export default function ManagerStockPage() {
             </button>
           </div>
 
-          {/* Search Bar */}
           <div className="w-full lg:w-80 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -194,7 +191,7 @@ export default function ManagerStockPage() {
         </div>
       </div>
 
-      {/* Main Responsive Table */}
+      {/* Stock Table */}
       <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left min-w-[850px]">
@@ -223,7 +220,7 @@ export default function ManagerStockPage() {
                 <tr>
                   <td colSpan={9} className="p-10 text-center text-muted-foreground">
                     <Boxes className="w-8 h-8 mx-auto mb-2 opacity-20" />
-                    No stock or serial numbers found matching your criteria.
+                    No stock or serial numbers found.
                   </td>
                 </tr>
               ) : (
@@ -235,7 +232,6 @@ export default function ManagerStockPage() {
 
                   return (
                     <tr key={st.id} className="hover:bg-muted/30 transition-colors">
-                      {/* Serial / Batch Identifier */}
                       <td className="p-3.5 whitespace-nowrap">
                         {st.serialNumber ? (
                           <div className="flex items-center gap-1.5">
@@ -256,19 +252,14 @@ export default function ManagerStockPage() {
                         )}
                       </td>
 
-                      {/* Product Name */}
-                      <td className="p-3.5 max-w-xs">
-                        <div className="font-medium text-foreground line-clamp-1">
-                          {st.products?.name || "Unlinked Product"}
-                        </div>
+                      <td className="p-3.5 max-w-xs font-medium text-foreground line-clamp-1">
+                        {st.products?.name || "Unlinked Product"}
                       </td>
 
-                      {/* SKU */}
                       <td className="p-3.5 font-mono text-muted-foreground whitespace-nowrap">
                         {st.products?.sku || "—"}
                       </td>
 
-                      {/* Quantity */}
                       <td className="p-3.5 whitespace-nowrap">
                         {st.quantity > 0 ? (
                           <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-500">
@@ -284,11 +275,13 @@ export default function ManagerStockPage() {
                       </td>
 
                       {/* Cost Price */}
-                      <td className="p-3.5 font-mono text-muted-foreground whitespace-nowrap"> ETB {st.costPrice.toFixed(2)}
+                      <td className="p-3.5 font-mono text-muted-foreground whitespace-nowrap">
+                        ETB {st.costPrice.toFixed(2)}
                       </td>
 
                       {/* Retail Price */}
-                      <td className="p-3.5 font-mono font-bold text-foreground whitespace-nowrap"> ETB {st.sellingPrice.toFixed(2)}
+                      <td className="p-3.5 font-mono font-bold text-foreground whitespace-nowrap">
+                        ETB {st.sellingPrice.toFixed(2)}
                       </td>
 
                       {/* Markup % */}
@@ -305,7 +298,6 @@ export default function ManagerStockPage() {
                         </span>
                       </td>
 
-                      {/* Tax Status */}
                       <td className="p-3.5 whitespace-nowrap">
                         {st.withVat ? (
                           <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">
@@ -320,14 +312,12 @@ export default function ManagerStockPage() {
                         )}
                       </td>
 
-                      {/* Actions */}
                       <td className="p-3.5 text-right whitespace-nowrap space-x-1">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleOpenEdit(st)}
                           className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
-                          title="Edit stock"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </Button>
@@ -336,7 +326,6 @@ export default function ManagerStockPage() {
                           size="sm"
                           onClick={() => setDeletingStock(st)}
                           className="h-7 px-2 text-xs text-destructive hover:bg-destructive/10"
-                          title="Delete stock"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </Button>
@@ -349,7 +338,7 @@ export default function ManagerStockPage() {
           </table>
         </div>
 
-        {/* Pagination Bar */}
+        {/* Pagination */}
         <div className="p-3 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground bg-muted/20">
           <span>
             Showing Page {meta.page || 1} of {meta.totalPages || 1}
@@ -377,7 +366,6 @@ export default function ManagerStockPage() {
         </div>
       </div>
 
-      {/* CRUD Modals */}
       <StockFormDialog
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}

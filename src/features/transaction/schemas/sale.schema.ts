@@ -8,7 +8,8 @@ export const CartItemSchema = z.object({
 
 export const CreateSaleSchema = z.object({
   items: z.array(CartItemSchema).min(1, "Cart must contain at least one item"),
-  paymentMethod: z.enum(["CASH", "CARD", "TRANSFER"]).default("CASH"),
+  paymentMethod: z.enum(["CASH", "CARD", "TRANSFER", "CREDIT"]).default("CASH"),
+  bankId: z.string().optional().nullable(), // <-- Added
   customerName: z.string().trim().optional(),
   customerPhone: z.string().trim().optional(),
 });

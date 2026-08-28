@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useCategories } from "@/features/category/hooks/use-categories";
 import { useProducts, type ProductItem, type ProductStock } from "@/features/product/hooks/use-products";
 import { useCheckoutSale } from "@/features/transaction/hooks/use-transactions";
@@ -33,12 +33,152 @@ interface CartItem {
   batchNumber?: string | null;
   price: number; // Negotiated selling price
   costPrice: number; // Wholesale cost floor
-  defaultPrice: number; // Default retail selling price
+  defaultPrice: number;
   quantity: number;
   maxQuantity: number;
   withVat: boolean;
 }
 
+// ─────────────────────────────────────────────────────────────
+// Sub-Component: Focus-Safe Price Input (Supports clearing & decimals)
+// ─────────────────────────────────────────────────────────────
+function CartPriceInput({
+  price,
+  costPrice,
+  onPriceChange,
+}: {
+  price: number;
+  costPrice: number;
+  onPriceChange: (newPrice: number) => void;
+}) {
+  const [localVal, setLocalVal] = useState(price.toString());
+
+  useEffect(() => {
+    setLocalVal(price.toString());
+  }, [price]);
+
+  const numVal = parseFloat(localVal);
+  const isBelowCost = !isNaN(numVal) && numVal < costPrice;
+
+  return (
+    <div
+      className={`flex items-center rounded-lg border overflow-hidden transition-all ${isBelowCost
+          ? "border-destructive bg-destructive/10 ring-1 ring-destructive"
+          : "border-border bg-background focus-within:ring-1 focus-within:ring-primary"
+        }`}
+    >
+      <span className="bg-muted/80 px-2 py-1 text-[10px] font-bold font-mono text-muted-foreground border-r border-border select-none">
+        ETB
+      </span>
+      <input
+        type="text"
+        inputMode="decimal"
+        value={localVal}
+        placeholder="0.00"
+        onChange={(e) => {
+          const val = e.target.value;
+          // Allow empty string, numbers, and a single decimal point
+          if (val === "" || /^\d*\.?\d*$/.test(val)) {
+            setLocalVal(val);
+            const parsed = parseFloat(val);
+            onPriceChange(isNaN(parsed) ? 0 : parsed);
+          }
+        }}
+        className="w-24 px-2 py-0.5 text-xs font-bold font-mono bg-transparent border-0 text-foreground focus:outline-none"
+      />
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Sub-Component: Focus-Safe Quantity Input (Supports clearing)
+// ─────────────────────────────────────────────────────────────
+function CartQuantityInput({
+  quantity,
+  maxQuantity,
+  onQuantityChange,
+}: {
+  quantity: number;
+  maxQuantity: number;
+  onQuantityChange: (newQty: number) => void;
+}) {
+  const [localVal, setLocalVal] = useState(quantity.toString());
+
+  useEffect(() => {
+    setLocalVal(quantity.toString());
+  }, [quantity]);
+
+  return (
+    <div className="flex items-center gap-1 bg-muted/80 rounded-lg border border-border p-0.5">
+      <button
+        type="button"
+        onClick={() => {
+          const next = Math.max(1, quantity - 1);
+          setLocalVal(next.toString());
+          onQuantityChange(next);
+        }}
+        disabled={quantity <= 1}
+        className="p-1 hover:text-primary disabled:opacity-30 transition-colors"
+        title="Decrease quantity"
+      >
+        <Minus className="w-3 h-3" />
+      </button>
+
+      <input
+        type="text"
+        inputMode="numeric"
+        value={localVal}
+        placeholder="1"
+        onChange={(e) => {
+          const val = e.target.value;
+          if (val === "" || /^\d+$/.test(val)) {
+            setLocalVal(val);
+            const num = parseInt(val, 10);
+            if (!isNaN(num) && num >= 1) {
+              if (num > maxQuantity) {
+                toast.error(`Max available stock is ${maxQuantity}`);
+                onQuantityChange(maxQuantity);
+                setLocalVal(maxQuantity.toString());
+              } else {
+                onQuantityChange(num);
+              }
+            }
+          }
+        }}
+        onBlur={() => {
+          const num = parseInt(localVal, 10);
+          if (isNaN(num) || num < 1) {
+            setLocalVal("1");
+            onQuantityChange(1);
+          }
+        }}
+        className="w-9 text-center text-xs font-bold font-mono bg-background rounded border border-border/50 text-foreground py-0.5 focus:outline-none focus:ring-1 focus:ring-primary"
+      />
+
+      <button
+        type="button"
+        onClick={() => {
+          if (quantity < maxQuantity) {
+            const next = quantity + 1;
+            setLocalVal(next.toString());
+            onQuantityChange(next);
+          } else {
+            toast.error(`Max available stock is ${maxQuantity}`);
+          }
+        }}
+        disabled={quantity >= maxQuantity}
+        className="p-1 hover:text-primary disabled:opacity-30 transition-colors"
+        title="Increase quantity"
+      >
+        <Plus className="w-3 h-3" />
+      </button>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Main POS Page
+// ─────────────────────────────────────────────────────────────
 export default function PosPage() {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("ALL");
@@ -54,7 +194,6 @@ export default function PosPage() {
   const { data: productsData, isLoading: isLoadingProducts } = useProducts(search, selectedCategory);
   const checkoutSale = useCheckoutSale();
 
-  // Intelligent Stock Add Logic
   const handleProductSelect = (product: ProductItem) => {
     const availableStocks = product.stocks?.filter((s) => s.quantity > 0) || [];
     if (availableStocks.length === 0) {
@@ -62,20 +201,17 @@ export default function PosPage() {
       return;
     }
 
-    // If product has multiple stocks (multiple batches or serialized devices), open selection dialog
     const hasMultipleStocks = availableStocks.length > 1;
-    const hasSerials = availableStocks.some((s) => !!s.serialNumber);
+    const hasSerials = availableStocks.some((s) => !s.serialNumber);
 
     if (hasMultipleStocks || hasSerials) {
       setDialogProduct(product);
     } else {
-      // Single Batch Item: Directly add to cart!
       const stock = availableStocks[0];
       addStockToCart(product, stock);
     }
   };
 
-  // Helper to add specific stock record to cart
   const addStockToCart = (product: ProductItem, stock: ProductStock) => {
     setCart((prev) => {
       const existing = prev.find((item) => item.stockId === stock.id);
@@ -127,54 +263,15 @@ export default function PosPage() {
     addStockToCart(dialogProduct, stock);
   };
 
-  // Quantity Controls
-  const updateQuantity = (stockId: string, delta: number) => {
+  const setItemPrice = (stockId: string, newPrice: number) => {
     setCart((prev) =>
-      prev
-        .map((item) => {
-          if (item.stockId === stockId) {
-            if (item.serialNumber) return item;
-            const newQty = item.quantity + delta;
-            if (newQty > item.maxQuantity) {
-              toast.error(`Max stock available in this batch: ${item.maxQuantity}`);
-              return item;
-            }
-            return newQty > 0 ? { ...item, quantity: newQty } : null;
-          }
-          return item;
-        })
-        .filter(Boolean) as CartItem[]
+      prev.map((item) => (item.stockId === stockId ? { ...item, price: newPrice } : item))
     );
   };
 
-  const handleQuantityInput = (stockId: string, rawValue: string) => {
-    const parsed = parseInt(rawValue, 10);
+  const setItemQuantity = (stockId: string, newQty: number) => {
     setCart((prev) =>
-      prev.map((item) => {
-        if (item.stockId === stockId) {
-          if (item.serialNumber) return item;
-          if (isNaN(parsed) || parsed < 1) return { ...item, quantity: 1 };
-          if (parsed > item.maxQuantity) {
-            toast.error(`Max available: ${item.maxQuantity}`);
-            return { ...item, quantity: item.maxQuantity };
-          }
-          return { ...item, quantity: parsed };
-        }
-        return item;
-      })
-    );
-  };
-
-  // Negotiable Custom Unit Price Input
-  const handlePriceInput = (stockId: string, rawValue: string) => {
-    const parsed = parseFloat(rawValue) || 0;
-    setCart((prev) =>
-      prev.map((item) => {
-        if (item.stockId === stockId) {
-          return { ...item, price: parsed };
-        }
-        return item;
-      })
+      prev.map((item) => (item.stockId === stockId ? { ...item, quantity: newQty } : item))
     );
   };
 
@@ -182,7 +279,7 @@ export default function PosPage() {
     setCart((prev) => prev.filter((item) => item.stockId !== stockId));
   };
 
-  // Total Calculations
+  // Calculations
   const totalCartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
   const subtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const vatAmount = cart.reduce(
@@ -191,7 +288,9 @@ export default function PosPage() {
   );
   const total = subtotal + vatAmount;
 
-  // Checkout Execution
+  // Check if any item is below wholesale cost
+  const hasBelowCostItem = cart.some((i) => i.price < i.costPrice);
+
   const handleConfirmCheckout = async ({
     paymentMethod,
     customerName,
@@ -201,12 +300,8 @@ export default function PosPage() {
     customerName?: string;
     customerPhone?: string;
   }) => {
-    // Client-side cost floor pre-validation
-    const belowCostItem = cart.find((i) => i.price < i.costPrice);
-    if (belowCostItem) {
-      toast.error(
-        `Unit price for "${belowCostItem.name}" (ETB ${belowCostItem.price.toFixed(2)}) is below wholesale cost (ETB ${belowCostItem.costPrice.toFixed(2)}). Requires Manager Approval.`
-      );
+    if (hasBelowCostItem) {
+      toast.error("One or more items are below wholesale cost. Adjust price before checkout.");
       return;
     }
 
@@ -249,167 +344,10 @@ export default function PosPage() {
     }
   };
 
-  // Reusable Cart Content View
-  const CartContent = () => (
-    <div className="flex flex-col h-full bg-card">
-      <div className="p-3.5 border-b border-border flex items-center justify-between bg-muted/30">
-        <div className="flex items-center gap-2">
-          <ShoppingBag className="w-4 h-4 text-primary" />
-          <h2 className="text-xs font-semibold text-foreground">Current Cart</h2>
-        </div>
-        <span className="text-[11px] font-medium text-muted-foreground">
-          {totalCartCount} items
-        </span>
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-3 space-y-2">
-        {cart.length === 0 ? (
-          <div className="h-full min-h-[160px] flex flex-col items-center justify-center text-muted-foreground">
-            <Sparkles className="w-8 h-8 opacity-10 mb-2" />
-            <p className="text-xs">Cart is empty</p>
-            <p className="text-[10px] text-muted-foreground/60">Tap products to add</p>
-          </div>
-        ) : (
-          cart.map((item) => {
-            const isBelowCost = item.price < item.costPrice;
-
-            return (
-              <div
-                key={item.stockId}
-                className="p-2.5 rounded-lg border border-border bg-background space-y-2"
-              >
-                {/* Product Name & Identifier */}
-                <div className="flex justify-between items-start gap-2">
-                  <div>
-                    <h4 className="text-xs font-semibold text-foreground line-clamp-1">
-                      {item.name}
-                    </h4>
-                    <div className="flex items-center gap-1.5 mt-0.5 text-[10px] font-mono">
-                      {item.serialNumber ? (
-                        <span className="text-primary bg-primary/10 px-1 rounded font-bold flex items-center gap-1">
-                          <Barcode className="w-3 h-3" />
-                          SN: {item.serialNumber}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground flex items-center gap-1">
-                          <Boxes className="w-3 h-3" />
-                          {item.batchNumber ? `Batch: ${item.batchNumber}` : "Standard Batch"} (Max: {item.maxQuantity})
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => removeFromCart(item.stockId)}
-                    className="text-muted-foreground hover:text-destructive p-1"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-
-                {/* Price Negotiation & Quantity Controls */}
-                <div className="flex items-center justify-between pt-1 border-t border-border/40 gap-2">
-                  {/* Negotiable Price Input */}
-                  <div className="flex items-center gap-1">
-                    <span className="text-[11px] text-muted-foreground">Price:</span>
-                    <div className="relative flex items-center">
-                      <span className="absolute left-1.5 text-xs text-muted-foreground font-mono">ETB</span>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min={0}
-                        value={item.price}
-                        onChange={(e) => handlePriceInput(item.stockId, e.target.value)}
-                        className={`w-20 pl-4 pr-1 py-0.5 text-xs font-bold font-mono rounded border bg-background focus:outline-none ${isBelowCost
-                            ? "border-destructive text-destructive bg-destructive/10 ring-1 ring-destructive"
-                            : "border-border text-foreground focus:ring-1 focus:ring-primary"
-                          }`}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Quantity Controls */}
-                  {!item.serialNumber ? (
-                    <div className="flex items-center gap-1 bg-muted/80 rounded-md border border-border/80 p-0.5">
-                      <button
-                        type="button"
-                        onClick={() => updateQuantity(item.stockId, -1)}
-                        disabled={item.quantity <= 1}
-                        className="p-1 hover:text-primary disabled:opacity-30"
-                      >
-                        <Minus className="w-3 h-3" />
-                      </button>
-                      <input
-                        type="number"
-                        min={1}
-                        max={item.maxQuantity}
-                        value={item.quantity}
-                        onChange={(e) => handleQuantityInput(item.stockId, e.target.value)}
-                        className="w-9 text-center text-xs font-bold font-mono bg-background rounded border border-border/50 text-foreground py-0.5 focus:outline-none focus:ring-1 focus:ring-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => updateQuantity(item.stockId, 1)}
-                        disabled={item.quantity >= item.maxQuantity}
-                        className="p-1 hover:text-primary disabled:opacity-30"
-                      >
-                        <Plus className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ) : (
-                    <span className="text-[11px] font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded">
-                      Qty: 1
-                    </span>
-                  )}
-                </div>
-
-                {/* Below Cost Warning */}
-                {isBelowCost && (
-                  <div className="text-[10px] text-destructive font-semibold flex items-center gap-1">
-                    <AlertTriangle className="w-3 h-3" />
-                    Below wholesale cost (ETB {item.costPrice.toFixed(2)}). Requires Manager Approval.
-                  </div>
-                )}
-              </div>
-            );
-          })
-        )}
-      </div>
-
-      {/* Checkout Footer */}
-      <div className="p-3.5 border-t border-border bg-muted/20 space-y-3">
-        <div className="space-y-1 text-xs">
-          <div className="flex justify-between text-muted-foreground">
-            <span>Subtotal</span>
-            <span> ETB {subtotal.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between text-muted-foreground">
-            <span>VAT (15%)</span>
-            <span> ETB {vatAmount.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between font-bold text-sm text-foreground pt-1.5 border-t border-border/60">
-            <span>Total</span>
-            <span> ETB {total.toFixed(2)}</span>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          disabled={cart.length === 0 || cart.some((i) => i.price < i.costPrice)}
-          onClick={() => setIsCheckoutOpen(true)}
-          className="w-full h-11 rounded-xl bg-primary text-primary-foreground font-semibold text-xs transition-all active:scale-[0.98] disabled:opacity-50 shadow-sm"
-        >
-          Checkout (ETB {total.toFixed(2)})
-        </button>
-      </div>
-    </div>
-  );
-
   return (
     <div className="flex flex-col lg:flex-row h-auto lg:h-[calc(100vh-6.5rem)] gap-4 overflow-visible lg:overflow-hidden relative pb-20 lg:pb-0">
       {/* Product Catalog Column */}
       <div className="flex-1 flex flex-col bg-card rounded-2xl border border-border overflow-hidden min-h-[500px]">
-        {/* Top Filters */}
         <div className="p-3.5 border-b border-border space-y-2.5 bg-muted/20">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -477,53 +415,146 @@ export default function PosPage() {
         </div>
       </div>
 
-      {/* Desktop Cart Column */}
+      {/* Desktop Cart Column (Directly inlined to prevent React focus unmounting) */}
       <div className="hidden lg:flex w-80 xl:w-96 flex-shrink-0 flex-col bg-card rounded-2xl border border-border overflow-hidden">
-        <CartContent />
+        <div className="p-3.5 border-b border-border flex items-center justify-between bg-muted/30">
+          <div className="flex items-center gap-2">
+            <ShoppingBag className="w-4 h-4 text-primary" />
+            <h2 className="text-xs font-semibold text-foreground">Current Cart</h2>
+          </div>
+          <span className="text-[11px] font-medium text-muted-foreground">
+            {totalCartCount} items
+          </span>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-3 space-y-2.5">
+          {cart.length === 0 ? (
+            <div className="h-full min-h-[160px] flex flex-col items-center justify-center text-muted-foreground">
+              <Sparkles className="w-8 h-8 opacity-10 mb-2" />
+              <p className="text-xs">Cart is empty</p>
+              <p className="text-[10px] text-muted-foreground/60">Tap products to add</p>
+            </div>
+          ) : (
+            cart.map((item) => {
+              const isBelowCost = item.price < item.costPrice;
+
+              return (
+                <div
+                  key={item.stockId}
+                  className="p-2.5 rounded-xl border border-border bg-background space-y-2"
+                >
+                  <div className="flex justify-between items-start gap-2">
+                    <div>
+                      <h4 className="text-xs font-semibold text-foreground line-clamp-1">
+                        {item.name}
+                      </h4>
+                      <div className="flex items-center gap-1.5 mt-0.5 text-[10px] font-mono">
+                        {item.serialNumber ? (
+                          <span className="text-primary bg-primary/10 px-1 rounded font-bold flex items-center gap-1">
+                            <Barcode className="w-3 h-3" />
+                            SN: {item.serialNumber}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground flex items-center gap-1">
+                            <Boxes className="w-3 h-3" />
+                            {item.batchNumber ? `Batch: ${item.batchNumber}` : "Standard Batch"} (Max: {item.maxQuantity})
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeFromCart(item.stockId)}
+                      className="text-muted-foreground hover:text-destructive p-1 transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1 border-t border-border/40 gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[11px] text-muted-foreground font-medium">Price:</span>
+                      <CartPriceInput
+                        price={item.price}
+                        costPrice={item.costPrice}
+                        onPriceChange={(newP) => setItemPrice(item.stockId, newP)}
+                      />
+                    </div>
+
+                    {!item.serialNumber ? (
+                      <CartQuantityInput
+                        quantity={item.quantity}
+                        maxQuantity={item.maxQuantity}
+                        onQuantityChange={(newQ) => setItemQuantity(item.stockId, newQ)}
+                      />
+                    ) : (
+                      <span className="text-[10px] font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                        Qty: 1
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Warning is shown without taking focus away */}
+                  {isBelowCost && (
+                    <div className="text-[10px] text-destructive font-semibold flex items-center gap-1 pt-0.5">
+                      <AlertTriangle className="w-3 h-3 shrink-0" />
+                      Below cost (ETB {item.costPrice.toFixed(2)}). Checkout locked.
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        <div className="p-3.5 border-t border-border bg-muted/20 space-y-3">
+          <div className="space-y-1 text-xs">
+            <div className="flex justify-between text-muted-foreground">
+              <span>Subtotal</span>
+              <span className="font-mono">ETB {subtotal.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-muted-foreground">
+              <span>VAT (15%)</span>
+              <span className="font-mono">ETB {vatAmount.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between font-bold text-sm text-foreground pt-1.5 border-t border-border/60">
+              <span>Total</span>
+              <span className="font-mono text-primary">ETB {total.toFixed(2)}</span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            disabled={cart.length === 0 || hasBelowCostItem}
+            onClick={() => setIsCheckoutOpen(true)}
+            className="w-full h-11 rounded-xl bg-primary text-primary-foreground font-semibold text-xs transition-all active:scale-[0.98] disabled:opacity-50 shadow-sm"
+          >
+            {hasBelowCostItem
+              ? "Price Below Cost (Locked)"
+              : `Checkout (ETB ${total.toFixed(2)})`}
+          </button>
+        </div>
       </div>
 
-      {/* Mobile Floating Cart Trigger Pill */}
+      {/* Mobile Trigger & Drawer */}
       <div className="lg:hidden fixed bottom-4 left-4 right-4 z-40">
         <button
           type="button"
           onClick={() => setIsMobileOpen(true)}
-          className="w-full h-12 rounded-2xl bg-primary text-primary-foreground font-semibold px-4 flex items-center justify-between shadow-2xl shadow-primary/30 active:scale-[0.98] transition-all"
+          className="w-full h-12 rounded-2xl bg-primary text-primary-foreground font-semibold px-4 flex items-center justify-between shadow-2xl active:scale-[0.98] transition-all"
         >
           <div className="flex items-center gap-2 text-xs">
             <ShoppingBag className="w-4 h-4" />
-            <span>
-              {totalCartCount} {totalCartCount === 1 ? "Item" : "Items"} in Cart
-            </span>
+            <span>{totalCartCount} in Cart</span>
           </div>
           <div className="flex items-center gap-1.5 text-xs font-bold font-mono">
-            <span> ETB {total.toFixed(2)}</span>
+            <span>ETB {total.toFixed(2)}</span>
             <ArrowRight className="w-4 h-4" />
           </div>
         </button>
       </div>
 
-      {/* Mobile Slide-Up Cart Sheet */}
-      {isMobileCartOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 flex flex-col justify-end bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-h-[85vh] h-[85vh] bg-card rounded-t-3xl border-t border-border shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-300">
-            <div className="p-3 border-b border-border flex justify-between items-center bg-muted/40">
-              <span className="text-xs font-bold text-foreground">Shopping Cart</span>
-              <button
-                type="button"
-                onClick={() => setIsMobileOpen(false)}
-                className="p-1 rounded-full text-muted-foreground hover:text-foreground"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="flex-1 overflow-hidden">
-              <CartContent />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Intelligent Multi-Batch / Serial Dialog */}
+      {/* Multi-Batch & Serial Dialog */}
       {dialogProduct && (
         <PosSerialDialog
           product={dialogProduct}

@@ -54,7 +54,7 @@ export default function ManagerProductsPage() {
 
   return (
     <div className="space-y-4 sm:space-y-5 animate-in fade-in duration-300">
-      {/* Top Header */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
           <h1 className="text-lg sm:text-xl font-bold tracking-tight text-foreground">
@@ -75,10 +75,9 @@ export default function ManagerProductsPage() {
         </Button>
       </div>
 
-      {/* Search & Category Filter Strip */}
+      {/* Filter Strip */}
       <div className="space-y-3 bg-card p-3 sm:p-4 rounded-2xl border border-border shadow-sm">
         <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-3">
-          {/* Category Tabs */}
           <div className="flex gap-1.5 overflow-x-auto pb-1 max-w-full text-xs scrollbar-none">
             <button
               type="button"
@@ -111,7 +110,6 @@ export default function ManagerProductsPage() {
             ))}
           </div>
 
-          {/* Search Bar */}
           <div className="w-full lg:w-80 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -128,7 +126,7 @@ export default function ManagerProductsPage() {
         </div>
       </div>
 
-      {/* Main Responsive Table Container */}
+      {/* Products Table */}
       <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left min-w-[760px]">
@@ -161,22 +159,17 @@ export default function ManagerProductsPage() {
                 </tr>
               ) : (
                 products.map((product) => {
-                  const totalStock =
-                    product.stocks?.reduce((acc, s) => acc + s.quantity, 0) ?? 0;
+                  const totalStock = product.stocks?.reduce((acc, s) => acc + s.quantity, 0) ?? 0;
                   const sampleStock = product.stocks?.[0];
                   const price = sampleStock?.sellingPrice ?? 0;
-
-                  // Read product-level withVat directly with fallback to stock
                   const isVat = product.withVat ?? sampleStock?.withVat ?? true;
 
                   return (
                     <tr key={product.id} className="hover:bg-muted/30 transition-colors">
-                      {/* SKU */}
                       <td className="p-3.5 font-mono font-semibold text-foreground whitespace-nowrap">
                         {product.sku}
                       </td>
 
-                      {/* Name */}
                       <td className="p-3.5 max-w-xs">
                         <div className="font-medium text-foreground line-clamp-1">{product.name}</div>
                         {product.description && (
@@ -186,12 +179,10 @@ export default function ManagerProductsPage() {
                         )}
                       </td>
 
-                      {/* Category */}
                       <td className="p-3.5 text-muted-foreground whitespace-nowrap">
                         {product.category?.name || "Unassigned"}
                       </td>
 
-                      {/* Warranty */}
                       <td className="p-3.5 whitespace-nowrap">
                         {product.warrantyDays && product.warrantyDays > 0 ? (
                           <span className="flex items-center gap-1 text-primary font-medium">
@@ -203,7 +194,6 @@ export default function ManagerProductsPage() {
                         )}
                       </td>
 
-                      {/* Green vs Red VAT Badge */}
                       <td className="p-3.5 whitespace-nowrap">
                         {isVat ? (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">
@@ -218,7 +208,6 @@ export default function ManagerProductsPage() {
                         )}
                       </td>
 
-                      {/* Total Stock */}
                       <td className="p-3.5 whitespace-nowrap">
                         {totalStock > 0 ? (
                           <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-500">
@@ -233,31 +222,27 @@ export default function ManagerProductsPage() {
                         )}
                       </td>
 
-                      {/* Price */}
-                      <td className="p-3.5 font-bold text-foreground whitespace-nowrap"> ETB {price.toFixed(2)}
+                      {/* Retail Price with ETB Prefix */}
+                      <td className="p-3.5 font-bold font-mono text-foreground whitespace-nowrap">
+                        ETB {price.toFixed(2)}
                       </td>
 
-                      {/* Actions */}
                       <td className="p-3.5 text-right whitespace-nowrap space-x-1">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleOpenEdit(product)}
                           className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
-                          title="Edit product"
                         >
-                          <Edit2 className="w-3.5 h-3.5 mr-1" />
-                          Edit
+                          <Edit2 className="w-3.5 h-3.5 mr-1" /> Edit
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => setDeletingProduct(product)}
                           className="h-7 px-2 text-xs text-destructive hover:bg-destructive/10"
-                          title="Delete product"
                         >
-                          <Trash2 className="w-3.5 h-3.5 mr-1" />
-                          Delete
+                          <Trash2 className="w-3.5 h-3.5 mr-1" /> Delete
                         </Button>
                       </td>
                     </tr>
@@ -268,7 +253,7 @@ export default function ManagerProductsPage() {
           </table>
         </div>
 
-        {/* Pagination Bar */}
+        {/* Pagination */}
         <div className="p-3 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground bg-muted/20">
           <span>
             Showing Page {meta.page || 1} of {meta.totalPages || 1}
@@ -296,7 +281,6 @@ export default function ManagerProductsPage() {
         </div>
       </div>
 
-      {/* CRUD Modals */}
       <ProductFormDialog
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}

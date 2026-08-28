@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useBanks } from "@/features/bank/hooks/use-banks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Banknote, CreditCard, Landmark, Loader2, X, ShieldCheck } from "lucide-react";
+import { Banknote, CreditCard, Landmark, Loader2, X, ShieldCheck, Building2 } from "lucide-react";
 
 interface PosCheckoutDialogProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface PosCheckoutDialogProps {
   onClose: () => void;
   onConfirm: (checkoutData: {
     paymentMethod: "CASH" | "CARD" | "TRANSFER";
+    bankId?: string;
     customerName?: string;
     customerPhone?: string;
   }) => void;
@@ -25,8 +27,11 @@ export function PosCheckoutDialog({
   onConfirm,
 }: PosCheckoutDialogProps) {
   const [paymentMethod, setPaymentMethod] = useState<"CASH" | "CARD" | "TRANSFER">("CASH");
+  const [bankId, setBankId] = useState<string>("");
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+
+  const { data: banks = [] } = useBanks();
 
   if (!isOpen) return null;
 
@@ -34,6 +39,7 @@ export function PosCheckoutDialog({
     e.preventDefault();
     onConfirm({
       paymentMethod,
+      bankId: paymentMethod === "TRANSFER" || paymentMethod === "CARD" ? bankId || undefined : undefined,
       customerName: customerName.trim() || undefined,
       customerPhone: customerPhone.trim() || undefined,
     });
@@ -46,8 +52,10 @@ export function PosCheckoutDialog({
           <div>
             <h2 className="text-base font-semibold text-foreground">Complete Checkout</h2>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Total Amount:{" "}
-              <span className="font-bold text-primary text-sm"> ETB {totalAmount.toFixed(2)}</span>
+              Total Due:{" "}
+              <span className="font-bold text-primary text-sm font-mono">
+                ETB {totalAmount.toFixed(2)}
+              </span>
             </p>
           </div>
           <button
@@ -60,7 +68,7 @@ export function PosCheckoutDialog({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 space-y-5">
+        <form onSubmit={handleSubmit} className="p-5 space-y-4">
           {/* Payment Method Selector */}
           <div className="space-y-2">
             <label className="text-xs font-medium text-foreground">Payment Method</label>
@@ -85,7 +93,7 @@ export function PosCheckoutDialog({
                   }`}
               >
                 <CreditCard className="w-5 h-5 mb-1.5" />
-                Card
+                Card / POS
               </button>
               <button
                 type="button"
@@ -96,13 +104,36 @@ export function PosCheckoutDialog({
                   }`}
               >
                 <Landmark className="w-5 h-5 mb-1.5" />
-                Transfer
+                Bank Transfer
               </button>
             </div>
           </div>
 
-          {/* Customer Details (Optional for warranty) */}
-          <div className="space-y-2.5 pt-1">
+          {/* Conditional Bank Selector */}
+          {(paymentMethod === "TRANSFER" || paymentMethod === "CARD") && (
+            <div className="space-y-1.5 animate-in fade-in duration-200">
+              <label className="text-xs font-medium text-foreground flex items-center gap-1">
+                <Building2 className="w-3.5 h-3.5 text-primary" />
+                Select Receiving Bank Account
+              </label>
+              <select
+                value={bankId}
+                onChange={(e) => setBankId(e.target.value)}
+                required
+                className="w-full h-9 px-3 text-xs bg-background border border-input rounded-xl focus:outline-none focus:ring-1 focus:ring-primary font-medium"
+              >
+                <option value="">-- Choose Bank / Payment Channel --</option>
+                {banks.map((bank) => (
+                  <option key={bank.id} value={bank.id}>
+                    {bank.name} {bank.accountNumber ? `(${bank.accountNumber})` : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Customer Details */}
+          <div className="space-y-2 pt-1 border-t border-border">
             <div className="flex justify-between items-center">
               <label className="text-xs font-medium text-foreground flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-primary" />
@@ -115,17 +146,17 @@ export function PosCheckoutDialog({
 
             <Input
               type="text"
-              placeholder="Customer Full Name (Optional)"
+              placeholder="Customer Full Name"
               value={customerName}
               onChange={(e) => setCustomerName(e.target.value)}
-              className="h-9 text-xs bg-background"
+              className="h-8 text-xs bg-background"
             />
             <Input
               type="text"
-              placeholder="Phone Number (Optional)"
+              placeholder="Phone Number (e.g. +251 9...)"
               value={customerPhone}
               onChange={(e) => setCustomerPhone(e.target.value)}
-              className="h-9 text-xs bg-background"
+              className="h-8 text-xs bg-background"
             />
           </div>
 
@@ -152,7 +183,7 @@ export function PosCheckoutDialog({
                   Processing...
                 </span>
               ) : (
-                "Confirm Sale"
+                "Confirm & Print Invoice"
               )}
             </Button>
           </div>
