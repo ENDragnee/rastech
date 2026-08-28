@@ -35,6 +35,19 @@ describe('sale.schema', () => {
       expect(result.success).toBe(true);
     });
 
+    it('should validate valid payload with bankId and CREDIT payment method', () => {
+      const payload = {
+        items: [
+          { stockId: 'stock-1', quantity: 1, price: 100 }
+        ],
+        paymentMethod: 'CREDIT',
+        bankId: 'bank-123',
+        customerName: 'John Doe',
+      };
+      const result = CreateSaleSchema.safeParse(payload);
+      expect(result.success).toBe(true);
+    });
+
     it('should require at least one item', () => {
       const result = CreateSaleSchema.safeParse({
         items: []

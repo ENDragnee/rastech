@@ -3,9 +3,17 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { PosCheckoutDialog } from '../components/pos-checkout-dialog';
 
+vi.mock('@/features/bank/hooks/use-banks', () => ({
+  useBanks: () => ({ data: [{ id: 'bank-1', name: 'CBE', accountNumber: '1000' }] })
+}));
+
 describe('PosCheckoutDialog', () => {
   const onConfirm = vi.fn();
   const onClose = vi.fn();
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('renders nothing when closed', () => {
     const { container } = render(
@@ -26,11 +34,12 @@ describe('PosCheckoutDialog', () => {
     fireEvent.change(nameInput, { target: { value: 'John Doe' } });
     fireEvent.change(phoneInput, { target: { value: '12345678' } });
 
-    const submitBtn = screen.getByRole('button', { name: /Confirm Sale/i });
+    const submitBtn = screen.getByRole('button', { name: /Confirm & Print Invoice/i });
     fireEvent.click(submitBtn);
 
     expect(onConfirm).toHaveBeenCalledWith({
       paymentMethod: 'CASH',
+      bankId: undefined,
       customerName: 'John Doe',
       customerPhone: '12345678'
     });
@@ -44,11 +53,15 @@ describe('PosCheckoutDialog', () => {
     const cardBtn = screen.getByRole('button', { name: /Card/i });
     fireEvent.click(cardBtn);
 
-    const submitBtn = screen.getByRole('button', { name: /Confirm Sale/i });
+    const select = screen.getByRole('combobox');
+    fireEvent.change(select, { target: { value: 'bank-1' } });
+
+    const submitBtn = screen.getByRole('button', { name: /Confirm & Print Invoice/i });
     fireEvent.click(submitBtn);
 
     expect(onConfirm).toHaveBeenCalledWith({
       paymentMethod: 'CARD',
+      bankId: 'bank-1',
       customerName: undefined,
       customerPhone: undefined
     });
@@ -61,3 +74,4 @@ describe('PosCheckoutDialog', () => {
     expect(screen.getByRole('button', { name: /Processing/i })).toBeDisabled();
   });
 });
+
