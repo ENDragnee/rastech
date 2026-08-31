@@ -192,6 +192,7 @@ enum TransactionType {
   RETURNED
   DEFECTIVE
   ADJUSTMENT_LOSS
+  VOIDED
 }
 
 enum PaymentMethod {

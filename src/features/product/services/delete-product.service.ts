@@ -19,15 +19,13 @@ export async function DeleteProduct(
 
   try {
     const result = await prisma.$transaction(async (tx) => {
-      // 1. Fetch Product with attached stocks, active credits, and transactions
+      // 1. Fetch Product with all stocks, credits, and history
       const product = await tx.product.findUnique({
         where: { id },
         include: {
           stocks: {
             include: {
-              credit: {
-                where: { status: "PENDING" },
-              },
+              credit: true,
               history: true,
             },
           },
@@ -39,7 +37,10 @@ export async function DeleteProduct(
       }
 
       // 2. Guard: Check for active uncollected customer debt
-      const activeCredits = product.stocks.flatMap((s) => s.credit);
+      const activeCredits = product.stocks
+        .flatMap((s) => s.credit)
+        .filter((c) => c.status === "PENDING");
+
       if (activeCredits.length > 0) {
         const totalPendingDebt = activeCredits.reduce(
           (acc, c) => acc + c.totalAmount,
@@ -52,44 +53,58 @@ export async function DeleteProduct(
         );
       }
 
-      // 3. Guard: Check for financial transaction history (preserve accounting integrity)
-      const totalTransactions = product.stocks.flatMap((s) => s.history).length;
-      if (totalTransactions > 0) {
-        throw new Error(
-          `Cannot delete "${product.name}". It has ${totalTransactions} recorded sales/transaction(s). Products with historical sales cannot be deleted to preserve accounting logs.`,
-        );
-      }
-
-      // 4. Guard: Check for physical inventory in warehouse
-      const remainingStock = product.stocks.reduce(
-        (sum, s) => sum + s.quantity,
-        0,
+      // 3. Guard: Check for active non-voided transactions
+      const allTransactions = product.stocks.flatMap((s) => s.history);
+      const activeTransactions = allTransactions.filter(
+        (t) => t.type !== "VOIDED",
       );
-      if (remainingStock > 0) {
+
+      if (activeTransactions.length > 0) {
         throw new Error(
-          `Cannot delete "${product.name}". There are still ${remainingStock} unit(s) in warehouse inventory.`,
+          `Cannot delete "${product.name}": It has ${activeTransactions.length} active recorded transaction(s). You must void all transactions on this product first.`,
         );
       }
 
-      // 5. Delete empty/unused stock batches first
-      await tx.stock.deleteMany({
-        where: { productId: id },
-      });
+      // 4. Extract stock IDs for cleanup
+      const stockIds = product.stocks.map((s) => s.id);
+      const voidedTxCount = allTransactions.length;
 
-      // 6. Delete product
+      if (stockIds.length > 0) {
+        // Purge attached resolved credits
+        await tx.credit.deleteMany({
+          where: { stockId: { in: stockIds } },
+        });
+
+        // Purge voided transactions
+        await tx.transaction.deleteMany({
+          where: { stockId: { in: stockIds } },
+        });
+
+        // Delete stock records
+        await tx.stock.deleteMany({
+          where: { productId: id },
+        });
+      }
+
+      // 5. Delete product
       const deletedProduct = await tx.product.delete({
         where: { id },
       });
 
-      // 7. Audit Log
+      // 6. Audit Log
       await tx.log.create({
         data: {
           type: "DELETE_PRODUCT",
           severity: "WARNING",
-          message: `User @${userName} deleted product "${product.name}" (${id})`,
+          message: `User @${userName} deleted product "${product.name}" (${id}). Purged ${voidedTxCount} voided transaction(s) and ${stockIds.length} stock batch(es).`,
           userId,
           targetId: id,
           targetName: product.name,
+          details: {
+            sku: product.sku,
+            stocksPurged: stockIds.length,
+            voidedTransactionsPurged: voidedTxCount,
+          },
         },
       });
 

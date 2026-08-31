@@ -6,10 +6,22 @@ import { axiosInstance } from "@/lib/axios";
 export interface TransactionItem {
   id: string;
   invoiceNumber: string;
-  type: "SOLD" | "PURCHASED" | "RETURNED" | "DEFECTIVE" | "ADJUSTMENT_LOSS";
+  type:
+    | "SOLD"
+    | "PURCHASED"
+    | "RETURNED"
+    | "DEFECTIVE"
+    | "ADJUSTMENT_LOSS"
+    | "VOIDED";
   quantity: number;
   price: number;
-  paymentMethod?: "CASH" | "CARD" | "TRANSFER" | "ADJUSTMENT_LOSS" | null;
+  paymentMethod?:
+    | "CASH"
+    | "CARD"
+    | "TRANSFER"
+    | "ADJUSTMENT_LOSS"
+    | "CREDIT"
+    | null;
   customerName?: string | null;
   customerPhone?: string | null;
   warrantyEndsAt?: string | null;

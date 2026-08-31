@@ -8,6 +8,7 @@ export const permissionsData: PermissionSeed[] = [
   // Transactions
   { name: "CREATE_TRANSACTION", guardName: "web", moduleSlug: "transactions" },
   { name: "FETCH_TRANSACTION", guardName: "web", moduleSlug: "transactions" },
+  { name: "VOID_TRANSACTION", guardName: "web", moduleSlug: "transactions" },
   { name: "PROCESS_SALE", guardName: "web", moduleSlug: "transactions" },
   { name: "PROCESS_RETURN", guardName: "web", moduleSlug: "transactions" },
 

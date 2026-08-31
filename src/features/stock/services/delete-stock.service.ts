@@ -23,9 +23,7 @@ export async function DeleteStock(
         where: { id },
         include: {
           products: true,
-          credit: {
-            where: { status: "PENDING" },
-          },
+          credit: true,
           history: true,
         },
       });
@@ -34,40 +32,63 @@ export async function DeleteStock(
         throw new Error("Stock record not found.");
       }
 
-      // 1. Block deletion if there is uncollected customer debt
-      if (stock.credit.length > 0) {
-        const totalPendingDebt = stock.credit.reduce(
+      // 1. Guard: Check for active uncollected debt
+      const activeCredits = stock.credit.filter((c) => c.status === "PENDING");
+      if (activeCredits.length > 0) {
+        const totalPendingDebt = activeCredits.reduce(
           (acc, c) => acc + c.totalAmount,
           0,
         );
         throw new Error(
-          `Cannot delete stock. There is active customer credit of ETB ${totalPendingDebt.toFixed(
+          `Cannot delete stock. Active customer credit of ETB ${totalPendingDebt.toFixed(
             2,
-          )} attached to this item. Settle or return the credit first.`,
+          )} is attached to this item. Settle or return the debt first.`,
         );
       }
 
-      // 2. Block deletion if there is financial sales history (prevent corrupting tax/sales reports)
-      if (stock.history.length > 0) {
+      // 2. Guard: Check for active non-voided transactions
+      const activeTransactions = stock.history.filter(
+        (t) => t.type !== "VOIDED",
+      );
+      if (activeTransactions.length > 0) {
         throw new Error(
-          `Cannot delete stock batch with completed financial transactions (${stock.history.length} transactions recorded).`,
+          `Cannot delete stock batch: It has ${activeTransactions.length} active recorded sales/transaction(s). You must void all transactions first if this was an erroneous entry.`,
         );
       }
 
-      // 3. Delete stock item safely (only if no transactions or debts exist)
+      // 3. Purge attached resolved credits and voided transactions
+      const voidedTxCount = stock.history.length;
+      if (stock.credit.length > 0) {
+        await tx.credit.deleteMany({
+          where: { stockId: id },
+        });
+      }
+
+      if (voidedTxCount > 0) {
+        await tx.transaction.deleteMany({
+          where: { stockId: id },
+        });
+      }
+
+      // 4. Delete the stock batch
       const deletedStock = await tx.stock.delete({
         where: { id },
       });
 
-      // 4. Audit Log
+      // 5. Audit Log
       await tx.log.create({
         data: {
           type: "DELETE_STOCK",
           severity: "WARNING",
-          message: `User @${userName} deleted stock batch ${id} (${stock.products.name})`,
+          message: `User @${userName} deleted stock batch ${id} (${stock.products.name}). Purged ${voidedTxCount} voided transaction(s).`,
           userId,
           targetId: id,
           targetName: stock.products.name,
+          details: {
+            serialNumber: stock.serialNumber,
+            batchNumber: stock.batchNumber,
+            voidedTransactionsPurged: voidedTxCount,
+          },
         },
       });
 

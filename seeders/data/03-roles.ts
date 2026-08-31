@@ -45,6 +45,7 @@ export const rolesData: RoleSeed[] = [
       "UPDATE_CREDIT",
       "DELETE_CREDIT",
       "FETCH_BANK",
+      "VOID_TRANSACTION",
     ],
   },
   {
@@ -85,6 +86,7 @@ export const rolesData: RoleSeed[] = [
       "CREATE_BANK",
       "UPDATE_BANK",
       "DELETE_BANK",
+      "VOID_TRANSACTION",
     ],
   },
 ];

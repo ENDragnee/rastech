@@ -27,6 +27,7 @@ import {
   Calendar,
   Layers,
   Check,
+  Ban,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,6 +35,7 @@ import { ManagerAdjustmentDialog } from "@/features/transaction/components/manag
 import { TransactionDetailsDialog } from "@/features/transaction/components/transaction-details-dialog";
 import { ReturnDialog } from "@/features/transaction/components/return-dialog";
 import { PosReceiptDialog } from "@/features/pos/components/pos-receipt-dialog";
+import { VoidTransactionDialog } from "@/features/transaction/components/void-transaction-dialog";
 import { toast } from "sonner";
 
 export default function ManagerTransactionsPage() {
@@ -49,6 +51,7 @@ export default function ManagerTransactionsPage() {
   const [selectedTx, setSelectedTx] = useState<TransactionItem | null>(null);
   const [returnItem, setReturnItem] = useState<TransactionItem | null>(null);
   const [selectedReceipt, setSelectedReceipt] = useState<any | null>(null);
+  const [voidingTx, setVoidingTx] = useState<TransactionItem | null>(null);
 
   const { data, isLoading, isFetching } = useTransactions(search, page);
 
@@ -155,7 +158,7 @@ export default function ManagerTransactionsPage() {
             Transaction Registry &amp; Inventory Adjustments
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Audit store sales, customer warranty returns, and execute manual stock adjustments.
+            Audit store sales, customer warranty returns, void mistake invoices, and execute stock adjustments.
           </p>
         </div>
 
@@ -181,14 +184,15 @@ export default function ManagerTransactionsPage() {
         </div>
       </div>
 
-      {/* Responsive KPI Metrics Grid */}
+      {/* KPI Metrics Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="p-3.5 sm:p-4 rounded-2xl border border-border bg-card shadow-sm space-y-1">
           <div className="flex items-center justify-between text-muted-foreground">
             <span className="text-xs font-medium">Filtered Sales Volume</span>
             <TrendingUp className="w-4 h-4 text-emerald-500" />
           </div>
-          <div className="text-xl sm:text-2xl font-bold text-foreground"> ETB {totalSalesVolume.toFixed(2)}
+          <div className="text-xl sm:text-2xl font-bold text-foreground font-mono">
+            ETB {totalSalesVolume.toFixed(2)}
           </div>
           <span className="text-[10px] text-muted-foreground block">
             From {salesItems.length} completed sales
@@ -200,7 +204,8 @@ export default function ManagerTransactionsPage() {
             <span className="text-xs font-medium">Average Order Value (AOV)</span>
             <Layers className="w-4 h-4 text-primary" />
           </div>
-          <div className="text-xl sm:text-2xl font-bold text-foreground"> ETB {averageOrderValue.toFixed(2)}
+          <div className="text-xl sm:text-2xl font-bold text-foreground font-mono">
+            ETB {averageOrderValue.toFixed(2)}
           </div>
           <span className="text-[10px] text-muted-foreground block">Per retail transaction</span>
         </div>
@@ -210,10 +215,10 @@ export default function ManagerTransactionsPage() {
             <span className="text-xs font-medium">Recorded Shrinkage &amp; Loss</span>
             <TrendingDown className="w-4 h-4 text-destructive" />
           </div>
-          <div className="text-xl sm:text-2xl font-bold text-destructive">
+          <div className="text-xl sm:text-2xl font-bold text-destructive font-mono">
             -ETB {totalLossVolume.toFixed(2)}
           </div>
-          <span className="text-[10px] text-muted-foreground block">Defective &amp; inventory write-offs</span>
+          <span className="text-[10px] text-muted-foreground block">Defective &amp; write-offs</span>
         </div>
 
         <div className="p-3.5 sm:p-4 rounded-2xl border border-border bg-card shadow-sm space-y-1">
@@ -221,17 +226,17 @@ export default function ManagerTransactionsPage() {
             <span className="text-xs font-medium">Audit Trail Records</span>
             <ReceiptText className="w-4 h-4 text-primary" />
           </div>
-          <div className="text-xl sm:text-2xl font-bold text-foreground">{meta.total}</div>
+          <div className="text-xl sm:text-2xl font-bold text-foreground font-mono">{meta.total}</div>
           <span className="text-[10px] text-muted-foreground block">Database entries</span>
         </div>
       </div>
 
-      {/* Responsive Filter Strip */}
+      {/* Filter Strip */}
       <div className="space-y-3 bg-card p-3 sm:p-4 rounded-2xl border border-border shadow-sm">
         <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-3">
           {/* Status Filter Pills */}
           <div className="flex gap-1.5 overflow-x-auto pb-1 max-w-full text-xs scrollbar-none">
-            {["ALL", "SOLD", "RETURNED", "DEFECTIVE", "ADJUSTMENT_LOSS", "PURCHASED"].map(
+            {["ALL", "SOLD", "RETURNED", "DEFECTIVE", "ADJUSTMENT_LOSS", "PURCHASED", "VOIDED"].map(
               (type) => (
                 <button
                   key={type}
@@ -267,9 +272,8 @@ export default function ManagerTransactionsPage() {
           </div>
         </div>
 
-        {/* Secondary Filter Row */}
+        {/* Secondary Filters */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 pt-2 border-t border-border/50 text-xs">
-          {/* Timeframe selector */}
           <div className="flex items-center gap-1.5 flex-wrap">
             <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
             <span className="text-muted-foreground font-medium mr-1">Timeframe:</span>
@@ -294,7 +298,6 @@ export default function ManagerTransactionsPage() {
             ))}
           </div>
 
-          {/* Payment method selector */}
           <div className="flex items-center gap-1.5 w-full sm:w-auto justify-between sm:justify-start">
             <span className="text-muted-foreground font-medium">Payment:</span>
             <select
@@ -306,15 +309,16 @@ export default function ManagerTransactionsPage() {
               <option value="CASH">Cash</option>
               <option value="CARD">Card</option>
               <option value="TRANSFER">Transfer</option>
+              <option value="CREDIT">Credit</option>
             </select>
           </div>
         </div>
       </div>
 
-      {/* Responsive Table Container */}
+      {/* Responsive Table */}
       <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full text-xs text-left min-w-[880px]">
+          <table className="w-full text-xs text-left min-w-[920px]">
             <thead className="border-b border-border bg-muted/40 text-muted-foreground uppercase text-[10px] tracking-wider font-semibold">
               <tr>
                 <th className="p-3.5">Invoice</th>
@@ -346,13 +350,21 @@ export default function ManagerTransactionsPage() {
                 filteredTransactions.map((tx) => {
                   const isWarrantyValid =
                     tx.warrantyEndsAt && new Date(tx.warrantyEndsAt) > new Date();
+                  const isVoided = tx.type === "VOIDED";
 
                   return (
-                    <tr key={tx.id} className="hover:bg-muted/30 transition-colors group">
+                    <tr
+                      key={tx.id}
+                      className={`hover:bg-muted/30 transition-colors group ${isVoided ? "opacity-60 bg-muted/10" : ""
+                        }`}
+                    >
                       {/* Invoice ID */}
                       <td className="p-3.5 font-mono whitespace-nowrap">
                         <div className="flex items-center gap-1.5">
-                          <span className="font-semibold text-foreground">
+                          <span
+                            className={`font-semibold ${isVoided ? "line-through text-muted-foreground" : "text-foreground"
+                              }`}
+                          >
                             {tx.invoiceNumber}
                           </span>
                           <button
@@ -384,7 +396,7 @@ export default function ManagerTransactionsPage() {
                         </span>
                       </td>
 
-                      {/* Hardware Item & Serial */}
+                      {/* Hardware Item */}
                       <td className="p-3.5 max-w-xs">
                         <div className="font-medium text-foreground line-clamp-1">
                           {tx.stocks?.products?.name || "Hardware Item"}
@@ -406,7 +418,7 @@ export default function ManagerTransactionsPage() {
                         </div>
                       </td>
 
-                      {/* Customer & Warranty Info */}
+                      {/* Customer & Warranty */}
                       <td className="p-3.5 whitespace-nowrap">
                         <div className="font-medium text-foreground">
                           {tx.customerName || "Walk-in Customer"}
@@ -437,6 +449,8 @@ export default function ManagerTransactionsPage() {
                             <CreditCard className="w-3.5 h-3.5" />
                           ) : tx.paymentMethod === "TRANSFER" ? (
                             <Landmark className="w-3.5 h-3.5" />
+                          ) : tx.paymentMethod === "CREDIT" ? (
+                            <ReceiptText className="w-3.5 h-3.5 text-amber-500" />
                           ) : (
                             <Banknote className="w-3.5 h-3.5" />
                           )}
@@ -450,12 +464,14 @@ export default function ManagerTransactionsPage() {
                       <td className="p-3.5 whitespace-nowrap">
                         <span
                           className={`inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full ${tx.type === "SOLD"
-                            ? "bg-emerald-500/10 text-emerald-500"
+                            ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
                             : tx.type === "RETURNED"
-                              ? "bg-amber-500/10 text-amber-500"
+                              ? "bg-amber-500/10 text-amber-500 border border-amber-500/20"
                               : tx.type === "DEFECTIVE"
-                                ? "bg-destructive/10 text-destructive"
-                                : "bg-purple-500/10 text-purple-500"
+                                ? "bg-destructive/10 text-destructive border border-destructive/20"
+                                : tx.type === "VOIDED"
+                                  ? "bg-muted text-muted-foreground line-through border border-border"
+                                  : "bg-purple-500/10 text-purple-500 border border-purple-500/20"
                             }`}
                         >
                           {tx.type}
@@ -463,7 +479,8 @@ export default function ManagerTransactionsPage() {
                       </td>
 
                       {/* Total Price */}
-                      <td className="p-3.5 font-bold text-foreground whitespace-nowrap"> ETB {tx.price.toFixed(2)}
+                      <td className="p-3.5 font-bold text-foreground whitespace-nowrap font-mono">
+                        ETB {tx.price.toFixed(2)}
                       </td>
 
                       {/* Actions */}
@@ -473,9 +490,9 @@ export default function ManagerTransactionsPage() {
                           size="sm"
                           onClick={() => setSelectedTx(tx)}
                           className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground gap-1"
-                          title="View Complete Audit Log"
+                          title="View Details"
                         >
-                          <Eye className="w-3.5 h-3.5" /> Details
+                          <Eye className="w-3.5 h-3.5" />
                         </Button>
 
                         <Button
@@ -507,6 +524,7 @@ export default function ManagerTransactionsPage() {
                           <Printer className="w-3.5 h-3.5" />
                         </Button>
 
+                        {/* Return Action for Sales */}
                         {tx.type === "SOLD" && (
                           <Button
                             variant="outline"
@@ -517,6 +535,20 @@ export default function ManagerTransactionsPage() {
                           >
                             <RotateCcw className="w-3.5 h-3.5 mr-1" />
                             Return
+                          </Button>
+                        )}
+
+                        {/* Void Action for Admin / Mistake Cancellation */}
+                        {!isVoided && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setVoidingTx(tx)}
+                            className="h-7 px-2 text-xs text-destructive hover:bg-destructive/10"
+                            title="Void / Cancel Mistake Invoice"
+                          >
+                            <Ban className="w-3.5 h-3.5 mr-1" />
+                            Void
                           </Button>
                         )}
                       </td>
@@ -556,7 +588,7 @@ export default function ManagerTransactionsPage() {
         </div>
       </div>
 
-      {/* Modals */}
+      {/* Dialog Modals */}
       <ManagerAdjustmentDialog
         isOpen={isAdjustmentOpen}
         onClose={() => setIsAdjustmentOpen(false)}
@@ -578,6 +610,12 @@ export default function ManagerTransactionsPage() {
         isOpen={!!selectedReceipt}
         invoiceData={selectedReceipt}
         onClose={() => setSelectedReceipt(null)}
+      />
+
+      <VoidTransactionDialog
+        transaction={voidingTx}
+        isOpen={!!voidingTx}
+        onClose={() => setVoidingTx(null)}
       />
     </div>
   );
