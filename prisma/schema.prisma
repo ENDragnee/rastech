@@ -166,7 +166,7 @@ model Transaction {
 
   paymentMethod PaymentMethod?
   bankId        String?
-  bank          Bank?          @relation(fields: [bankId], references: [id])
+  bank          Bank?          @relation(fields: [bankId], references: [id], onDelete: SetNull)
   customerName  String?
   customerPhone String?
 

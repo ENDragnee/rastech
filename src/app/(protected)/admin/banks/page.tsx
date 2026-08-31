@@ -57,27 +57,36 @@ export default function AdminBanksPage() {
           name,
           accountNumber: accountNumber.trim() || null,
         });
-        toast.success("Bank details updated");
+        toast.success("Bank channel updated");
       } else {
         await createBank.mutateAsync({
           name,
           accountNumber: accountNumber.trim() || null,
         });
-        toast.success("Bank account added");
+        toast.success("Bank channel created");
       }
       setIsDialogOpen(false);
     } catch (err: any) {
-      toast.error(err?.response?.data?.error || "Failed to save bank");
+      toast.error(err?.response?.data?.error || err?.message || "Failed to save bank");
     }
   };
 
   const handleDelete = async (bank: BankItem) => {
-    if (!confirm(`Are you sure you want to delete "${bank.name}"?`)) return;
+    const transactionCount = bank._count?.transactions || 0;
+    const confirmMessage =
+      transactionCount > 0
+        ? `"${bank.name}" has ${transactionCount} recorded transaction(s). Deleting it will detach the bank reference from past invoices without deleting the sales. Proceed?`
+        : `Are you sure you want to delete "${bank.name}"?`;
+
+    if (!confirm(confirmMessage)) return;
+
     try {
       await deleteBank.mutateAsync(bank.id);
-      toast.success("Bank deleted");
+      toast.success("Bank deleted successfully");
     } catch (err: any) {
-      toast.error("Cannot delete bank with associated transactions");
+      toast.error(
+        err?.response?.data?.error || err?.message || "Failed to delete bank"
+      );
     }
   };
 
@@ -109,21 +118,21 @@ export default function AdminBanksPage() {
           <Button
             size="sm"
             onClick={handleOpenCreate}
-            className="h-8 text-xs font-semibold gap-1.5 bg-primary"
+            className="h-8 text-xs font-semibold gap-1.5 bg-primary text-primary-foreground"
           >
             <Plus className="w-3.5 h-3.5" /> Add Bank
           </Button>
         </div>
       </div>
 
-      {/* Banks Table */}
+      {/* Table */}
       <div className="rounded-xl border border-border bg-card overflow-hidden shadow-sm">
         <table className="w-full text-xs text-left">
           <thead className="border-b border-border bg-muted/40 text-muted-foreground uppercase text-[10px] tracking-wider font-semibold">
             <tr>
               <th className="p-3.5">Bank / Channel Name</th>
               <th className="p-3.5">Account / Merchant #</th>
-              <th className="p-3.5">Transactions Processed</th>
+              <th className="p-3.5">Transactions Linked</th>
               <th className="p-3.5 text-right">Actions</th>
             </tr>
           </thead>
@@ -146,7 +155,7 @@ export default function AdminBanksPage() {
               banks.map((b) => (
                 <tr key={b.id} className="hover:bg-muted/30 transition-colors">
                   <td className="p-3.5 font-semibold text-foreground flex items-center gap-2">
-                    <Building2 className="w-4 h-4 text-primary" />
+                    <Building2 className="w-4 h-4 text-primary shrink-0" />
                     {b.name}
                   </td>
                   <td className="p-3.5 font-mono text-foreground font-medium">
@@ -155,7 +164,7 @@ export default function AdminBanksPage() {
                     )}
                   </td>
                   <td className="p-3.5">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary border border-primary/20">
                       <CreditCard className="w-3 h-3" />
                       {b._count?.transactions || 0} Transactions
                     </span>
@@ -173,6 +182,7 @@ export default function AdminBanksPage() {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDelete(b)}
+                      disabled={deleteBank.isPending}
                       className="h-7 px-2 text-xs text-destructive hover:bg-destructive/10"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -185,7 +195,7 @@ export default function AdminBanksPage() {
         </table>
       </div>
 
-      {/* Create / Edit Bank Dialog */}
+      {/* Modal */}
       {isDialogOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="w-full max-w-md bg-card rounded-2xl border border-border shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">

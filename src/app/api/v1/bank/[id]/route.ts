@@ -24,7 +24,9 @@ export const DELETE = CreateApiRoute({
     status: true,
     permission: "DELETE_BANK",
   },
-  handler: async (body: any, session: any, context: any) => {
-    return await DeleteBank(context.id);
+  handler: async (body: any, session: any, params: any, logger: any) => {
+    const id = params?.id;
+    if (!id) throw new Error("Bank ID is required");
+    return await DeleteBank(id, session, logger);
   },
 });
