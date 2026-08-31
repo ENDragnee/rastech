@@ -211,7 +211,7 @@ export default function ManagerTransactionsPage() {
             <TrendingDown className="w-4 h-4 text-destructive" />
           </div>
           <div className="text-xl sm:text-2xl font-bold text-destructive">
-            -${totalLossVolume.toFixed(2)}
+            -ETB {totalLossVolume.toFixed(2)}
           </div>
           <span className="text-[10px] text-muted-foreground block">Defective &amp; inventory write-offs</span>
         </div>
@@ -241,8 +241,8 @@ export default function ManagerTransactionsPage() {
                     setPage(1);
                   }}
                   className={`px-3 py-1.5 rounded-lg font-medium whitespace-nowrap transition-colors ${typeFilter === type
-                      ? "bg-foreground text-background font-semibold"
-                      : "bg-muted/60 text-muted-foreground hover:text-foreground"
+                    ? "bg-foreground text-background font-semibold"
+                    : "bg-muted/60 text-muted-foreground hover:text-foreground"
                     }`}
                 >
                   {type.replace("_", " ")}
@@ -279,8 +279,8 @@ export default function ManagerTransactionsPage() {
                 type="button"
                 onClick={() => setDateFilter(period)}
                 className={`px-2 py-0.5 rounded-md text-[11px] font-medium transition-all ${dateFilter === period
-                    ? "bg-primary text-primary-foreground font-semibold"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  ? "bg-primary text-primary-foreground font-semibold"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   }`}
               >
                 {period === "ALL"
@@ -450,12 +450,12 @@ export default function ManagerTransactionsPage() {
                       <td className="p-3.5 whitespace-nowrap">
                         <span
                           className={`inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full ${tx.type === "SOLD"
-                              ? "bg-emerald-500/10 text-emerald-500"
-                              : tx.type === "RETURNED"
-                                ? "bg-amber-500/10 text-amber-500"
-                                : tx.type === "DEFECTIVE"
-                                  ? "bg-destructive/10 text-destructive"
-                                  : "bg-purple-500/10 text-purple-500"
+                            ? "bg-emerald-500/10 text-emerald-500"
+                            : tx.type === "RETURNED"
+                              ? "bg-amber-500/10 text-amber-500"
+                              : tx.type === "DEFECTIVE"
+                                ? "bg-destructive/10 text-destructive"
+                                : "bg-purple-500/10 text-purple-500"
                             }`}
                         >
                           {tx.type}

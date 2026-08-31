@@ -11,6 +11,7 @@ import {
   PlusCircle,
   Edit2,
   UserX,
+  UserCheck,
   Loader2,
   CheckCircle2,
   XCircle,
@@ -23,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { UserFormDialog } from "@/features/user/components/user-form-dialog";
 import { DeactivateUserDialog } from "@/features/user/components/deactivate-user-dialog";
+import { ReactivateUserDialog } from "@/features/user/components/reactivate-user-dialog";
 import { UserRoleAssignDialog } from "@/features/user/components/user-role-assign-dialog";
 
 export default function AdminUsersPage() {
@@ -34,6 +36,7 @@ export default function AdminUsersPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserAccountItem | null>(null);
   const [deactivatingUser, setDeactivatingUser] = useState<UserAccountItem | null>(null);
+  const [reactivatingUser, setReactivatingUser] = useState<UserAccountItem | null>(null);
   const [roleAssignUser, setRoleAssignUser] = useState<UserAccountItem | null>(null);
 
   const { data, isLoading } = useUsers({
@@ -83,8 +86,8 @@ export default function AdminUsersPage() {
                 setPage(1);
               }}
               className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${statusFilter === "ACTIVE"
-                ? "bg-foreground text-background font-semibold"
-                : "bg-muted/60 text-muted-foreground hover:text-foreground"
+                  ? "bg-foreground text-background font-semibold"
+                  : "bg-muted/60 text-muted-foreground hover:text-foreground"
                 }`}
             >
               Active Staff Accounts
@@ -97,8 +100,8 @@ export default function AdminUsersPage() {
                 setPage(1);
               }}
               className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${statusFilter === "INACTIVE"
-                ? "bg-destructive/15 text-destructive font-semibold border border-destructive/30"
-                : "bg-muted/60 text-muted-foreground hover:text-foreground"
+                  ? "bg-destructive/15 text-destructive font-semibold border border-destructive/30"
+                  : "bg-muted/60 text-muted-foreground hover:text-foreground"
                 }`}
             >
               Deactivated Accounts
@@ -161,7 +164,7 @@ export default function AdminUsersPage() {
                       {u.name || "—"}
                     </td>
 
-                    {/* Interactive Role Badges */}
+                    {/* Assigned Role Badges */}
                     <td className="p-3.5 whitespace-nowrap">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         {u.roles && u.roles.length > 0 ? (
@@ -169,10 +172,10 @@ export default function AdminUsersPage() {
                             <span
                               key={r.id}
                               className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${r.name === "ADMIN"
-                                ? "bg-purple-500/10 text-purple-500 border-purple-500/30"
-                                : r.name === "MANAGER"
-                                  ? "bg-blue-500/10 text-blue-500 border-blue-500/30"
-                                  : "bg-emerald-500/10 text-emerald-500 border-emerald-500/30"
+                                  ? "bg-purple-500/10 text-purple-500 border-purple-500/30"
+                                  : r.name === "MANAGER"
+                                    ? "bg-blue-500/10 text-blue-500 border-blue-500/30"
+                                    : "bg-emerald-500/10 text-emerald-500 border-emerald-500/30"
                                 }`}
                             >
                               {r.name}
@@ -184,6 +187,7 @@ export default function AdminUsersPage() {
                       </div>
                     </td>
 
+                    {/* Status Badge */}
                     <td className="p-3.5 whitespace-nowrap">
                       {u.isActive ? (
                         <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
@@ -203,38 +207,54 @@ export default function AdminUsersPage() {
                       </div>
                     </td>
 
-                    {/* Actions with "Manage Roles" */}
+                    {/* Actions */}
                     <td className="p-3.5 text-right whitespace-nowrap space-x-1">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setRoleAssignUser(u)}
-                        className="h-7 px-2 text-xs text-primary border-primary/30 hover:bg-primary/10 gap-1"
-                        title="Update Assigned Roles & Permissions"
-                      >
-                        <ShieldCheck className="w-3.5 h-3.5" /> Roles
-                      </Button>
+                      {/* Active Account Actions */}
+                      {u.isActive ? (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setRoleAssignUser(u)}
+                            className="h-7 px-2 text-xs text-primary border-primary/30 hover:bg-primary/10 gap-1"
+                            title="Update Assigned Roles & Permissions"
+                          >
+                            <ShieldCheck className="w-3.5 h-3.5" /> Roles
+                          </Button>
 
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setEditingUser(u);
-                          setIsFormOpen(true);
-                        }}
-                        className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setEditingUser(u);
+                              setIsFormOpen(true);
+                            }}
+                            className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                            title="Edit User"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </Button>
 
-                      {u.isActive && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setDeactivatingUser(u)}
+                            className="h-7 px-2 text-xs text-destructive hover:bg-destructive/10"
+                            title="Deactivate User"
+                          >
+                            <UserX className="w-3.5 h-3.5" />
+                          </Button>
+                        </>
+                      ) : (
+                        /* Inactive Account Actions -> Reactivate */
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
-                          onClick={() => setDeactivatingUser(u)}
-                          className="h-7 px-2 text-xs text-destructive hover:bg-destructive/10"
+                          onClick={() => setReactivatingUser(u)}
+                          className="h-7 px-2.5 text-xs text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10 gap-1 font-semibold"
+                          title="Reactivate User Account"
                         >
-                          <UserX className="w-3.5 h-3.5" />
+                          <UserCheck className="w-3.5 h-3.5" /> Reactivate
                         </Button>
                       )}
                     </td>
@@ -286,7 +306,12 @@ export default function AdminUsersPage() {
         user={deactivatingUser}
       />
 
-      {/* Dedicated Role Assignment Dialog */}
+      <ReactivateUserDialog
+        isOpen={!!reactivatingUser}
+        onClose={() => setReactivatingUser(null)}
+        user={reactivatingUser}
+      />
+
       <UserRoleAssignDialog
         isOpen={!!roleAssignUser}
         onClose={() => setRoleAssignUser(null)}

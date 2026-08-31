@@ -133,3 +133,20 @@ export function useDeactivateUser() {
     },
   });
 }
+
+// 6. Reactivate User Mutation
+export function useReactivateUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await axiosInstance.patch(`/api/v1/user/${id}`, {
+        isActive: true,
+      });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+    },
+  });
+}
