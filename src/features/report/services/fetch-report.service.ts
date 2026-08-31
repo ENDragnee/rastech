@@ -199,7 +199,6 @@ export async function FetchReportData(req: FetchReportInput) {
     const totalVatGross = vatSales.reduce((acc, s) => acc + s.price, 0);
     const totalNonVatGross = nonVatSales.reduce((acc, s) => acc + s.price, 0);
 
-    // Standard 15% VAT portion: Gross / 1.15 * 0.15
     const totalVatLiability = (totalVatGross / 1.15) * 0.15;
     const netTaxableRevenue = totalVatGross - totalVatLiability;
 
@@ -229,7 +228,78 @@ export async function FetchReportData(req: FetchReportInput) {
     };
   }
 
-  // 5. Warranty & RMA Report
+  // 5. Credit & Debt Ledger Report (NEW)
+  if (type === "CREDIT_LEDGER") {
+    const credits = await prisma.credit.findMany({
+      where: {
+        ...(hasDateFilter && { createdAt: dateFilter }),
+        stock: {
+          products: categoryClause,
+        },
+      },
+      include: {
+        stock: {
+          include: { products: { include: { category: true } } },
+        },
+        transaction: true,
+        createdBy: { select: { userName: true } },
+        approvedBy: { select: { userName: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const totalCreditIssued = credits.reduce(
+      (acc, c) => acc + c.totalAmount,
+      0,
+    );
+    const pendingCredits = credits.filter((c) => c.status === "PENDING");
+    const totalPendingDebt = pendingCredits.reduce(
+      (acc, c) => acc + c.totalAmount,
+      0,
+    );
+    const totalPaidDebt = credits
+      .filter((c) => c.status === "PAID")
+      .reduce((acc, c) => acc + c.totalAmount, 0);
+    const totalDefaultedLoss = credits
+      .filter((c) => c.status === "DEFAULTED")
+      .reduce((acc, c) => acc + c.totalAmount, 0);
+
+    const now = new Date();
+    const overdueCount = pendingCredits.filter(
+      (c) => c.dueDate && new Date(c.dueDate) < now,
+    ).length;
+
+    return {
+      type,
+      summary: {
+        totalCreditIssued,
+        totalPendingDebt,
+        totalPaidDebt,
+        totalDefaultedLoss,
+        overdueCount,
+        totalRecords: credits.length,
+      },
+      rows: credits.map((c) => ({
+        invoiceNumber: c.transaction?.invoiceNumber || "CRD-INV",
+        customerName: c.customerName,
+        customerPhone: c.customerPhone || "—",
+        customerIdDoc: c.customerIdDoc || "—",
+        productName: c.stock?.products?.name || "N/A",
+        sku: c.stock?.products?.sku || "—",
+        serialNumber: c.stock?.serialNumber || "—",
+        quantity: c.quantity,
+        totalDebt: c.totalAmount,
+        status: c.status,
+        issuedDate: c.createdAt,
+        dueDate: c.dueDate ? c.dueDate : "Open Term",
+        resolvedDate: c.status !== "PENDING" ? c.updatedAt : "—",
+        issuedBy: c.createdBy?.userName || "System",
+        approvedBy: c.approvedBy?.userName || "—",
+      })),
+    };
+  }
+
+  // 6. Warranty & RMA Report
   const sales = await prisma.transaction.findMany({
     where: {
       type: "SOLD",

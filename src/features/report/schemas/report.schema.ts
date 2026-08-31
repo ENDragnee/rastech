@@ -6,6 +6,7 @@ export const ReportTypeEnum = z.enum([
   "DEFECTS_LOSSES",
   "TAX_VAT",
   "WARRANTY_RMA",
+  "CREDIT_LEDGER",
 ]);
 
 export type ReportType = z.infer<typeof ReportTypeEnum>;

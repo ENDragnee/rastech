@@ -14,6 +14,7 @@ import {
   AlertTriangle,
   Receipt,
   ShieldCheck,
+  Handshake,
   Loader2,
   Sparkles,
 } from "lucide-react";
@@ -52,6 +53,13 @@ export default function ReportsPage() {
       icon: TrendingUp,
       color: "text-emerald-500 border-emerald-500 bg-emerald-500/10",
       desc: "Itemized retail revenues, wholesale cost of goods (COGS), gross profit margins, and responsible staff.",
+    },
+    {
+      type: "CREDIT_LEDGER" as ReportType,
+      title: "Customer Credit & Debt",
+      icon: Handshake,
+      color: "text-amber-500 border-amber-500 bg-amber-500/10",
+      desc: "Audit trail of hardware issued on credit, outstanding customer debt, overdue receivables, and settled payments.",
     },
     {
       type: "DEFECTS_LOSSES" as ReportType,
@@ -143,7 +151,7 @@ export default function ReportsPage() {
         </div>
 
         <div className="p-4 sm:p-6 space-y-6">
-          {/* Report Type Selector Cards */}
+          {/* Report Type Selector Cards (6 cards in responsive grid) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {reportCards.map((c) => {
               const Icon = c.icon;
@@ -247,7 +255,15 @@ export default function ReportsPage() {
                       {k.replace(/([A-Z])/g, " $1")}
                     </span>
                     <span className="font-bold text-foreground font-mono">
-                      {typeof v === "number" && (k.toLowerCase().includes("value") || k.toLowerCase().includes("revenue") || k.toLowerCase().includes("profit") || k.toLowerCase().includes("cost"))
+                      {typeof v === "number" &&
+                        (k.toLowerCase().includes("value") ||
+                          k.toLowerCase().includes("revenue") ||
+                          k.toLowerCase().includes("profit") ||
+                          k.toLowerCase().includes("cost") ||
+                          k.toLowerCase().includes("debt") ||
+                          k.toLowerCase().includes("issued") ||
+                          k.toLowerCase().includes("paid") ||
+                          k.toLowerCase().includes("loss"))
                         ? `ETB ${Number(v).toFixed(2)}`
                         : typeof v === "number" && k.includes("Percent")
                           ? `${Number(v).toFixed(1)}%`
