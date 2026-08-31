@@ -21,23 +21,45 @@ export async function DeleteStock(
     const result = await prisma.$transaction(async (tx) => {
       const stock = await tx.stock.findUnique({
         where: { id },
-        include: { products: true },
+        include: {
+          products: true,
+          credit: {
+            where: { status: "PENDING" },
+          },
+          history: true,
+        },
       });
 
       if (!stock) {
         throw new Error("Stock record not found.");
       }
 
-      await tx.transaction.deleteMany({
-        where: { stockId: id },
-      });
+      // 1. Block deletion if there is uncollected customer debt
+      if (stock.credit.length > 0) {
+        const totalPendingDebt = stock.credit.reduce(
+          (acc, c) => acc + c.totalAmount,
+          0,
+        );
+        throw new Error(
+          `Cannot delete stock. There is active customer credit of ETB ${totalPendingDebt.toFixed(
+            2,
+          )} attached to this item. Settle or return the credit first.`,
+        );
+      }
 
-      // 3. Delete the stock item (Properly awaited)
+      // 2. Block deletion if there is financial sales history (prevent corrupting tax/sales reports)
+      if (stock.history.length > 0) {
+        throw new Error(
+          `Cannot delete stock batch with completed financial transactions (${stock.history.length} transactions recorded).`,
+        );
+      }
+
+      // 3. Delete stock item safely (only if no transactions or debts exist)
       const deletedStock = await tx.stock.delete({
         where: { id },
       });
 
-      // 4. Create Audit Log (Properly awaited)
+      // 4. Audit Log
       await tx.log.create({
         data: {
           type: "DELETE_STOCK",
@@ -55,7 +77,7 @@ export async function DeleteStock(
     logger?.info({ id }, "Stock deleted successfully");
     return result;
   } catch (err: any) {
-    logger?.error({ err, id }, "Failed to delete stock");
-    throw err;
+    logger?.error({ err: err.message, id }, "Failed to delete stock");
+    return NextResponse.json({ error: err.message }, { status: 400 });
   }
 }

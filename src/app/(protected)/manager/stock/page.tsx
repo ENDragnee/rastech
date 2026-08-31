@@ -128,8 +128,8 @@ export default function ManagerStockPage() {
                 setPage(1);
               }}
               className={`px-3 py-1.5 rounded-lg font-medium whitespace-nowrap transition-colors ${typeFilter === "ALL"
-                  ? "bg-foreground text-background font-semibold"
-                  : "bg-muted/60 text-muted-foreground hover:text-foreground"
+                ? "bg-foreground text-background font-semibold"
+                : "bg-muted/60 text-muted-foreground hover:text-foreground"
                 }`}
             >
               All Inventory ({meta.total})
@@ -141,8 +141,8 @@ export default function ManagerStockPage() {
                 setPage(1);
               }}
               className={`px-3 py-1.5 rounded-lg font-medium whitespace-nowrap transition-colors ${typeFilter === "SERIALIZED"
-                  ? "bg-primary text-primary-foreground font-semibold"
-                  : "bg-muted/60 text-muted-foreground hover:text-foreground"
+                ? "bg-primary text-primary-foreground font-semibold"
+                : "bg-muted/60 text-muted-foreground hover:text-foreground"
                 }`}
             >
               Serialized Hardware
@@ -154,8 +154,8 @@ export default function ManagerStockPage() {
                 setPage(1);
               }}
               className={`px-3 py-1.5 rounded-lg font-medium whitespace-nowrap transition-colors ${typeFilter === "BATCH"
-                  ? "bg-primary text-primary-foreground font-semibold"
-                  : "bg-muted/60 text-muted-foreground hover:text-foreground"
+                ? "bg-primary text-primary-foreground font-semibold"
+                : "bg-muted/60 text-muted-foreground hover:text-foreground"
                 }`}
             >
               Bulk Batches
@@ -167,8 +167,8 @@ export default function ManagerStockPage() {
                 setPage(1);
               }}
               className={`px-3 py-1.5 rounded-lg font-medium whitespace-nowrap transition-colors ${typeFilter === "LOW_STOCK"
-                  ? "bg-amber-500/15 text-amber-500 font-semibold border border-amber-500/30"
-                  : "bg-muted/60 text-muted-foreground hover:text-foreground"
+                ? "bg-amber-500/15 text-amber-500 font-semibold border border-amber-500/30"
+                : "bg-muted/60 text-muted-foreground hover:text-foreground"
                 }`}
             >
               Low Stock (&lt;5)
@@ -288,10 +288,10 @@ export default function ManagerStockPage() {
                       <td className="p-3.5 font-mono whitespace-nowrap">
                         <span
                           className={`font-semibold ${markup >= 25
-                              ? "text-emerald-500"
-                              : markup > 0
-                                ? "text-primary"
-                                : "text-destructive"
+                            ? "text-emerald-500"
+                            : markup > 0
+                              ? "text-primary"
+                              : "text-destructive"
                             }`}
                         >
                           +{markup.toFixed(1)}%

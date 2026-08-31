@@ -15,6 +15,7 @@ export interface CreditItem {
   stockId: string;
   transactionId: string;
   createdAt: string;
+  updatedAt: string;
   stock: {
     id: string;
     serialNumber?: string | null;

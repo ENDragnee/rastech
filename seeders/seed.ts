@@ -5,7 +5,6 @@ import { permissionsData } from "./data/02-permissions";
 import { rolesData } from "./data/03-roles";
 import { usersData } from "./data/04-users";
 import { categoriesData } from "./data/05-categories";
-import { productsData } from "./data/06-products";
 import { banksData } from "./data/07-banks";
 import { prisma } from "../src/lib/prisma";
 
@@ -14,10 +13,12 @@ async function main() {
 
   // 1. Clean existing records in reverse dependency order
   console.log("🧹 Clearing old data...");
+  await prisma.credit.deleteMany();
   await prisma.transaction.deleteMany();
   await prisma.stock.deleteMany();
   await prisma.product.deleteMany();
   await prisma.category.deleteMany();
+  await prisma.bank.deleteMany();
   await prisma.log.deleteMany();
   await prisma.session.deleteMany();
   await prisma.user.deleteMany();
@@ -116,74 +117,27 @@ async function main() {
 
   // 6. Seed Categories
   console.log("🏷️  Seeding product categories...");
-  const createdCategories = new Map<string, string>();
   for (const cat of categoriesData) {
-    const created = await prisma.category.create({
+    await prisma.category.create({
       data: {
         name: cat.name,
         description: cat.description,
       },
     });
-    createdCategories.set(cat.name, created.id);
   }
 
-  // 7. Seed Products & Stocks
-  console.log("💻 Seeding products & stocks...");
-  const createdStockIds: string[] = [];
-
-  for (const prod of productsData) {
-    const categoryId = createdCategories.get(prod.categoryName);
-    if (!categoryId) continue;
-
-    const createdProduct = await prisma.product.create({
+  // 7. Seed Commercial Banks
+  console.log("🏦 Seeding commercial banks...");
+  for (const b of banksData) {
+    await prisma.bank.create({
       data: {
-        name: prod.name,
-        sku: prod.sku,
-        description: prod.description,
-        warrantyDays: prod.warrantyDays,
-        withVat: true,
-        categoryId,
-      },
-    });
-
-    for (const st of prod.stocks) {
-      const createdStock = await prisma.stock.create({
-        data: {
-          serialNumber: st.serialNumber || null,
-          batchNumber: st.batchNumber || null,
-          quantity: st.quantity,
-          costPrice: st.costPrice,
-          sellingPrice: st.sellingPrice,
-          withVat: st.withVat,
-          productId: createdProduct.id,
-        },
-      });
-      createdStockIds.push(createdStock.id);
-    }
-  }
-
-  // 8. Seed Sample Transactions
-  console.log("🧾 Seeding initial transactions...");
-  const cashierId = createdUsers.get("cashier");
-
-  if (cashierId && createdStockIds.length > 0) {
-    await prisma.transaction.create({
-      data: {
-        invoiceNumber: "INV-2026-0001",
-        type: "SOLD",
-        quantity: 1,
-        price: 1999.0,
-        paymentMethod: "CARD",
-        customerName: "Abebe Kebede",
-        customerPhone: "+251911223344",
-        warrantyEndsAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-        stockId: createdStockIds[0],
-        userId: cashierId,
+        name: b.name,
+        accountNumber: b.accountNumber,
       },
     });
   }
 
-  // 9. Seed Logs
+  // 8. Seed System Logs
   const adminId = createdUsers.get("admin");
   if (adminId) {
     await prisma.log.create({
@@ -193,17 +147,6 @@ async function main() {
         message:
           "Rastech Inventory Database initialized with multi-role support.",
         userId: adminId,
-      },
-    });
-  }
-
-  console.log("🏦 Seeding commercial banks...");
-  await prisma.bank.deleteMany();
-  for (const b of banksData) {
-    await prisma.bank.create({
-      data: {
-        name: b.name,
-        accountNumber: b.accountNumber,
       },
     });
   }

@@ -15,6 +15,9 @@ import {
   ChevronRight,
   Phone,
   Calendar,
+  Clock,
+  CheckCircle2,
+  UserCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,7 +50,7 @@ export default function ManagerCreditsPage() {
             Credit &amp; Debt Registry
           </h1>
           <p className="text-xs text-muted-foreground">
-            Track hardware lent on credit, follow up customer dues, and restock returned items.
+            Track hardware lent on credit, follow up customer dues, and audit debt resolutions.
           </p>
         </div>
 
@@ -76,9 +79,9 @@ export default function ManagerCreditsPage() {
         </div>
       </div>
 
-      {/* Filter Tabs */}
+      {/* Filter Tabs & Summary */}
       <div className="flex items-center justify-between border-b border-border pb-2 text-xs">
-        <div className="flex gap-2">
+        <div className="flex gap-1.5 overflow-x-auto scrollbar-none">
           {["ALL", "PENDING", "PAID", "RETURNED", "DEFAULTED"].map((st) => (
             <button
               key={st}
@@ -87,12 +90,12 @@ export default function ManagerCreditsPage() {
                 setStatusFilter(st);
                 setOverdueOnly(false);
               }}
-              className={`px-3 py-1 rounded-lg font-medium transition-colors ${statusFilter === st && !overdueOnly
+              className={`px-3 py-1 rounded-lg font-medium whitespace-nowrap transition-colors ${statusFilter === st && !overdueOnly
                   ? "bg-foreground text-background font-semibold"
                   : "text-muted-foreground hover:text-foreground"
                 }`}
             >
-              {st}
+              {st === "ALL" ? "All Records" : st}
             </button>
           ))}
           <button
@@ -101,7 +104,7 @@ export default function ManagerCreditsPage() {
               setOverdueOnly(true);
               setStatusFilter("PENDING");
             }}
-            className={`px-3 py-1 rounded-lg font-medium transition-colors ${overdueOnly
+            className={`px-3 py-1 rounded-lg font-medium whitespace-nowrap transition-colors ${overdueOnly
                 ? "bg-destructive text-destructive-foreground font-semibold"
                 : "text-destructive hover:bg-destructive/10"
               }`}
@@ -111,7 +114,7 @@ export default function ManagerCreditsPage() {
         </div>
 
         <div className="text-[11px] text-muted-foreground">
-          Pending Debt: <span className="font-bold text-foreground">${totalOutstanding.toFixed(2)}</span>
+          Pending Debt: <span className="font-bold text-foreground font-mono">ETB {totalOutstanding.toFixed(2)}</span>
         </div>
       </div>
 
@@ -120,10 +123,11 @@ export default function ManagerCreditsPage() {
         <table className="w-full text-xs text-left">
           <thead className="border-b border-border bg-muted/40 text-muted-foreground uppercase text-[10px] tracking-wider font-semibold">
             <tr>
-              <th className="p-3.5">Customer &amp; Phone</th>
+              <th className="p-3.5">Customer Details</th>
               <th className="p-3.5">Hardware Item</th>
               <th className="p-3.5">Serial / Batch</th>
-              <th className="p-3.5">Due Date</th>
+              <th className="p-3.5">Issued Date</th>
+              <th className="p-3.5">Due / Resolved Date</th>
               <th className="p-3.5">Total Debt</th>
               <th className="p-3.5">Status</th>
               <th className="p-3.5 text-right">Actions</th>
@@ -132,14 +136,14 @@ export default function ManagerCreditsPage() {
           <tbody className="divide-y divide-border">
             {isLoading ? (
               <tr>
-                <td colSpan={7} className="p-10 text-center text-muted-foreground">
+                <td colSpan={8} className="p-10 text-center text-muted-foreground">
                   <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-primary" />
                   Loading credit ledger...
                 </td>
               </tr>
             ) : credits.length === 0 ? (
               <tr>
-                <td colSpan={7} className="p-10 text-center text-muted-foreground">
+                <td colSpan={8} className="p-10 text-center text-muted-foreground">
                   <Handshake className="w-8 h-8 mx-auto mb-2 opacity-20" />
                   No credit records found.
                 </td>
@@ -148,23 +152,26 @@ export default function ManagerCreditsPage() {
               credits.map((c) => {
                 const isOverdue =
                   c.status === "PENDING" && c.dueDate && new Date(c.dueDate) < new Date();
+                const isResolved = c.status !== "PENDING";
 
                 return (
                   <tr key={c.id} className="hover:bg-muted/30 transition-colors">
-                    {/* Customer */}
+                    {/* Customer Info */}
                     <td className="p-3.5">
                       <div className="font-semibold text-foreground">{c.customerName}</div>
-                      <div className="text-[10px] text-muted-foreground flex items-center gap-1 mt-0.5">
-                        <Phone className="w-3 h-3" /> {c.customerPhone}
-                      </div>
+                      {c.customerPhone && (
+                        <div className="text-[10px] text-muted-foreground flex items-center gap-1 mt-0.5">
+                          <Phone className="w-3 h-3 text-primary" /> {c.customerPhone}
+                        </div>
+                      )}
                       {c.customerIdDoc && (
-                        <span className="text-[9px] font-mono text-muted-foreground bg-muted px-1 rounded">
+                        <span className="text-[9px] font-mono text-muted-foreground bg-muted px-1 rounded inline-block mt-0.5">
                           ID: {c.customerIdDoc}
                         </span>
                       )}
                     </td>
 
-                    {/* Hardware */}
+                    {/* Hardware Item */}
                     <td className="p-3.5 max-w-xs">
                       <div className="font-medium text-foreground line-clamp-1">
                         {c.stock.products.name}
@@ -174,22 +181,45 @@ export default function ManagerCreditsPage() {
                       </div>
                     </td>
 
-                    {/* Serial Number */}
-                    <td className="p-3.5">
+                    {/* Serial / Batch */}
+                    <td className="p-3.5 whitespace-nowrap">
                       {c.stock.serialNumber ? (
                         <span className="font-mono text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded font-semibold flex items-center gap-1 w-fit">
                           <Barcode className="w-3 h-3" /> {c.stock.serialNumber}
                         </span>
                       ) : (
                         <span className="font-mono text-[10px] text-muted-foreground">
-                          {c.stock.batchNumber || "Bulk"}
+                          {c.stock.batchNumber || "Bulk Batch"}
                         </span>
                       )}
                     </td>
 
-                    {/* Due Date */}
+                    {/* Issued Date (createdAt) */}
+                    <td className="p-3.5 whitespace-nowrap text-muted-foreground">
+                      <div className="flex items-center gap-1 font-medium text-foreground">
+                        <Clock className="w-3 h-3 text-muted-foreground" />
+                        {new Date(c.createdAt).toLocaleDateString()}
+                      </div>
+                      <span className="text-[10px] text-muted-foreground/70">
+                        by @{c.createdBy?.userName || "staff"}
+                      </span>
+                    </td>
+
+                    {/* Due Date OR Resolved Date (updatedAt) */}
                     <td className="p-3.5 whitespace-nowrap">
-                      {c.dueDate ? (
+                      {isResolved ? (
+                        <div>
+                          <div className="flex items-center gap-1 text-emerald-500 font-medium">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>Resolved: {new Date(c.updatedAt).toLocaleDateString()}</span>
+                          </div>
+                          {c.approvedBy && (
+                            <span className="text-[10px] text-muted-foreground flex items-center gap-0.5 mt-0.5">
+                              <UserCheck className="w-3 h-3" /> @{c.approvedBy.userName}
+                            </span>
+                          )}
+                        </div>
+                      ) : c.dueDate ? (
                         <div className="flex items-center gap-1">
                           <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
                           <span className={isOverdue ? "text-destructive font-bold" : "text-foreground"}>
@@ -202,32 +232,32 @@ export default function ManagerCreditsPage() {
                           )}
                         </div>
                       ) : (
-                        <span className="text-muted-foreground text-[10px]">No due date</span>
+                        <span className="text-muted-foreground text-[10px]">Open Term</span>
                       )}
                     </td>
 
-                    {/* Amount */}
-                    <td className="p-3.5 font-bold text-foreground whitespace-nowrap">
-                      ${c.totalAmount.toFixed(2)}
+                    {/* Total Debt */}
+                    <td className="p-3.5 font-bold text-foreground font-mono whitespace-nowrap text-sm">
+                      ETB {c.totalAmount.toFixed(2)}
                     </td>
 
-                    {/* Status */}
-                    <td className="p-3.5">
+                    {/* Status Badge */}
+                    <td className="p-3.5 whitespace-nowrap">
                       <span
-                        className={`inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full ${c.status === "PAID"
-                            ? "bg-emerald-500/10 text-emerald-500"
+                        className={`inline-flex items-center text-[10px] font-bold px-2.5 py-0.5 rounded-full ${c.status === "PAID"
+                            ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
                             : c.status === "PENDING"
-                              ? "bg-amber-500/10 text-amber-500"
+                              ? "bg-amber-500/10 text-amber-500 border border-amber-500/20"
                               : c.status === "RETURNED"
-                                ? "bg-blue-500/10 text-blue-500"
-                                : "bg-destructive/10 text-destructive"
+                                ? "bg-blue-500/10 text-blue-500 border border-blue-500/20"
+                                : "bg-destructive/10 text-destructive border border-destructive/20"
                           }`}
                       >
                         {c.status}
                       </span>
                     </td>
 
-                    {/* Action */}
+                    {/* Actions */}
                     <td className="p-3.5 text-right whitespace-nowrap">
                       {c.status === "PENDING" ? (
                         <Button
@@ -249,7 +279,7 @@ export default function ManagerCreditsPage() {
           </tbody>
         </table>
 
-        {/* Pagination */}
+        {/* Pagination Bar */}
         <div className="p-3 border-t border-border flex items-center justify-between text-xs text-muted-foreground bg-muted/20">
           <span>
             Showing Page {meta.page || 1} of {meta.totalPages || 1}
